@@ -84,7 +84,7 @@ final class StyleViewConfigurator: StyleViewConfiguratorProtocol {
         var view = self.view
         while let currentView = view {
             if !(currentView.superview?.yoga.isEnabled ?? false) {
-                currentView.setNeedsLayout()
+                view?.setNeedsLayout()
             }
             view = view?.superview
         }
