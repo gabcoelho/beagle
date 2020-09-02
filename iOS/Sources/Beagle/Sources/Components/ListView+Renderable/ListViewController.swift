@@ -110,4 +110,9 @@ extension ListViewController: BeagleControllerProtocol {
     func execute(actions: [RawAction]?, with contextId: String, and contextValue: DynamicObject, origin: UIView) {
         renderer.controller.execute(actions: actions, with: contextId, and: contextValue, origin: origin)
     }
+    
+    func setNeedsLayout(component: UIView) {
+        component.yoga.markDirty()
+        collectionViewFlowLayout.invalidateLayout()
+    }
 }

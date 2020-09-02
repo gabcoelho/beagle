@@ -114,6 +114,7 @@ final class ListViewCell: UICollectionViewCell {
         let flexDirection = listView.model.direction.flexDirection
         let style = listView.listController.dependencies.style(contentView)
         style.setup(Style().flex(Flex().flexDirection(flexDirection)))
+        contentView.yoga.overflow = .scroll
         contentView.frame = listView.bounds
         style.applyLayout()
     }

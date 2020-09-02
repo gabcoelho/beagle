@@ -33,6 +33,8 @@ public protocol BeagleControllerProtocol: NSObjectProtocol {
     
     func execute(actions: [RawAction]?, origin: UIView)
     func execute(actions: [RawAction]?, with contextId: String, and contextValue: DynamicObject, origin: UIView)
+    
+    func setNeedsLayout(component: UIView)
 }
 
 public class BeagleScreenViewController: BeagleController {
@@ -290,6 +292,13 @@ extension BeagleControllerProtocol {
     
     public func setContext(_ context: Context, in view: UIView) {
         view.setContext(context)
+    }
+}
+
+extension BeagleControllerProtocol where Self: UIViewController {
+    public func setNeedsLayout(component: UIView) {
+        dependencies.style(component).markDirty()
+        viewIfLoaded?.setNeedsLayout()
     }
 }
 
