@@ -127,7 +127,7 @@ class BeagleControllerSpy: BeagleController {
     }
     
     func addBinding<T: Decodable>(expression: ContextExpression, in view: UIView, update: @escaping (T?) -> Void) {
-        // ...
+        // Intentionally unimplemented...
     }
     
     func execute(actions: [RawAction]?, origin: UIView) {

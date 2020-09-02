@@ -56,18 +56,18 @@ final class ListViewCell: UICollectionViewCell {
             return templateContainer
         }
         let template = listView.renderer.render(listView.model.template)
-        let templateContainer = TemplateContainer(template: template)
-        templateContainer.parentContext = listView
-        listView.listController.dependencies.style(templateContainer).setup(
+        let container = TemplateContainer(template: template)
+        container.parentContext = listView
+        listView.listController.dependencies.style(container).setup(
             Style().flex(Flex()
                 .flexDirection(listView.model.direction.flexDirection)
                 .shrink(0)
             )
         )
-        self.templateContainer = templateContainer
-        contentView.addSubview(templateContainer)
+        templateContainer = container
+        contentView.addSubview(container)
         
-        return templateContainer
+        return container
     }
     
     private func restoreContexts(_ itemContexts: [String: DynamicObject]) {
