@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-public struct ListView: RawWidget, HasContext, AutoInitiable {
+public struct ListView: RawWidget, HasContext, InitiableComponent, AutoInitiable {
     
     public var context: Context?
     public let onInit: [RawAction]?
     public let dataSource: Expression<[DynamicObject]>
+    public let key: String?
     public let direction: Direction?
     public let template: RawComponent
     public let iteratorName: String?
@@ -32,6 +33,7 @@ public struct ListView: RawWidget, HasContext, AutoInitiable {
         context: Context? = nil,
         onInit: [RawAction]? = nil,
         dataSource: Expression<[DynamicObject]>,
+        key: String? = nil,
         direction: Direction? = nil,
         template: RawComponent,
         iteratorName: String? = nil,
@@ -43,6 +45,7 @@ public struct ListView: RawWidget, HasContext, AutoInitiable {
         self.context = context
         self.onInit = onInit
         self.dataSource = dataSource
+        self.key = key
         self.direction = direction
         self.template = template
         self.iteratorName = iteratorName
@@ -104,6 +107,7 @@ extension ListView: Decodable {
         case context
         case onInit
         case dataSource
+        case key
         case direction
         case template
         case iteratorName
@@ -119,6 +123,7 @@ extension ListView: Decodable {
         let direction = try container.decodeIfPresent(Direction.self, forKey: .direction)
         
         self.direction = direction
+        key = try container.decodeIfPresent(String.self, forKey: .key)
         context = try container.decodeIfPresent(Context.self, forKey: .context)
         onInit = try container.decodeIfPresent(forKey: .onInit)
         onScrollEnd = try container.decodeIfPresent(forKey: .onScrollEnd)

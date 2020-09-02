@@ -15,89 +15,160 @@
  */
 
 import UIKit
-import YogaKit
 import BeagleSchema
 
-/// Defines a container that holds a listview item
 final class ListViewCell: UICollectionViewCell {
     
-    private var containerView: UIView?
+    private(set) var itemHash: Int?
+    private(set) var itemKey: String?
+    private(set) var viewContexts = [UIView: [Context]]()
     
-    var item: Int?
-    weak var listView: ListViewUIComponent?
+    private var bindings = [() -> Void]()
+    private var onInits = [(actions: [RawAction], view: UIView)]()
     
-    func itemContext(named name: String) -> Context? {
-        return containerView?.contextMap[name]?.value
-    }
+    private var templateContainer: TemplateContainer?
+    private weak var listView: ListViewUIComponent?
     
-    func configure(item: Int, listView: ListViewUIComponent) {
-        self.item = item
+    func configure(
+        hash: Int,
+        key: String,
+        item: DynamicObject,
+        contexts: [String: DynamicObject]?,
+        listView: ListViewUIComponent
+    ) {
+        self.itemHash = hash
+        self.itemKey = key
         self.listView = listView
         
-        let context: Context
-        let contextName = listView.model.iteratorName
-        if let savedContext = listView.contextResolver.context(for: item, named: contextName) {
-            context = savedContext
+        let container = templateContainer(for: listView)
+        if let contexts = contexts {
+            restoreContexts(contexts)
+            container.setContext(Context(id: listView.model.iteratorName, value: item))
         } else {
-            let value = listView.model.listViewItems?[item] ?? .empty
-            context = Context(id: contextName, value: value)
+            initContexts()
+            container.setContext(Context(id: listView.model.iteratorName, value: item))
+            onInits.forEach(listView.listController.execute)
+        }
+    }
+    
+    private func templateContainer(for listView: ListViewUIComponent) -> TemplateContainer {
+        if let templateContainer = self.templateContainer {
+            return templateContainer
+        }
+        let template = listView.renderer.render(listView.model.template)
+        let templateContainer = TemplateContainer(template: template)
+        templateContainer.parentContext = listView
+        listView.listController.dependencies.style(templateContainer).setup(
+            Style().flex(Flex()
+                .flexDirection(listView.model.direction.flexDirection)
+                .shrink(0)
+            )
+        )
+        self.templateContainer = templateContainer
+        contentView.addSubview(templateContainer)
+        
+        return templateContainer
+    }
+    
+    private func restoreContexts(_ itemContexts: [String: DynamicObject]) {
+        for (view, contexts) in viewContexts {
+            contexts
+                .map { Context(id: $0.id, value: itemContexts[$0.id, default: $0.value]) }
+                .forEach(view.setContext)
+        }
+    }
+    
+    private func initContexts() {
+        for (view, contexts) in viewContexts {
+            contexts.forEach(view.setContext)
+        }
+    }
+    
+    override func preferredLayoutAttributesFitting(_ layoutAttributes: UICollectionViewLayoutAttributes) -> UICollectionViewLayoutAttributes {
+        guard
+            let itemHash = itemHash,
+            let container = templateContainer,
+            let listView = listView else {
+                return layoutAttributes
         }
         
-        let flexDirection = listView.model.direction.flexDirection
-        let container = containerView ?? UIView()
-        let template = container.subviews.first ?? listView.renderer.render(listView.model.template)
-        container.removeFromSuperviewAndYogaTree()
+        addBindings()
+        applyLayout(constrainedBy: listView)
         
-        container.parentContext = listView
-        container.style.setup(Style().flex(Flex()
-            .flexDirection(flexDirection)
-            .shrink(0)
-        ))
-        if template.superview != container {
-            template.removeFromSuperviewAndYogaTree()
-            container.addSubview(template)
-        }
-        container.setContext(context)
-
-        let host = UIView()
-        host.isHidden = true
-        host.style.setup(Style().flex(Flex().flexDirection(flexDirection)))
-        host.yoga.overflow = .scroll
-        host.addSubview(container)
-        host.frame = listView.collectionView.bounds
-        
-        (listView.renderer.controller as? BeagleScreenViewController)?.configBindings()
-        
-        host.style.applyLayout()
         let size = container.bounds.size
         frame.size = size
         contentView.frame.size = size
-        container.removeFromSuperviewAndYogaTree()
+        layoutAttributes.size = size
+        listView.saveSize(size, forItem: itemHash)
         
-        contentView.addSubview(container)
-        containerView = container
-
-        host.removeFromSuperviewAndYogaTree()
+        return layoutAttributes
     }
     
-    override func preferredLayoutAttributesFitting(
-        _ layoutAttributes: UICollectionViewLayoutAttributes
-    ) -> UICollectionViewLayoutAttributes {
-        if let listView = listView, let containerView = containerView {
-            switch listView.model.direction {
-            case .vertical:
-                layoutAttributes.size.height = containerView.frame.size.height
-            case .horizontal:
-                layoutAttributes.size.width = containerView.frame.size.width
-            }
+    private func addBindings() {
+        while let bind = bindings.popLast() {
+            bind()
         }
-        return layoutAttributes
+    }
+    
+    private func applyLayout(constrainedBy listView: ListViewUIComponent) {
+        let flexDirection = listView.model.direction.flexDirection
+        let style = listView.listController.dependencies.style(contentView)
+        style.setup(Style().flex(Flex().flexDirection(flexDirection)))
+        contentView.frame = listView.bounds
+        style.applyLayout()
     }
 }
 
-extension UIView {
-    fileprivate func removeFromSuperviewAndYogaTree() {
-        removeFromSuperview()
-        YGNodeRemoveAllChildren(yoga.node)
+extension ListViewCell: ListViewControllerDelegate {
+    
+    func listViewController(_ vc: ListViewController, listIdentifierFor id: String?) -> String? {
+        if let id = id, let itemKey = itemKey {
+            return "\(id):\(itemKey)"
+        }
+        return id
+    }
+    
+    func listViewController(_ vc: ListViewController, setContext context: Context, in view: UIView) {
+        viewContexts[view, default: []].append(context)
+        view.setContext(context)
+    }
+    
+    func listViewController<T: Decodable>(_ vc: ListViewController, bind: ContextExpression, view: UIView, update: @escaping (T?) -> Void) {
+        bindings.append { [weak self, weak view] in
+            guard let self = self else { return }
+            view?.configBinding(
+                for: bind,
+                completion: self.bindBlock(view: view, update: update)
+            )
+        }
+    }
+    
+    private func bindBlock<T: Decodable>(view: UIView?, update: @escaping (T?) -> Void) -> (T?) -> Void {
+        return { [weak self, weak view] value in
+            update(value)
+            view?.yoga.markDirty()
+            if let self = self {
+                self.listView?.invalidateSize(cell: self)
+            }
+        }
+    }
+    
+    func listViewController(_ vc: ListViewController, onInit: [RawAction], view: UIView) {
+        onInits.append((onInit, view))
+    }
+}
+
+private final class TemplateContainer: UIView {
+    
+    let template: UIView
+    
+    init(template: UIView) {
+        self.template = template
+        super.init(frame: .zero)
+        addSubview(template)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }

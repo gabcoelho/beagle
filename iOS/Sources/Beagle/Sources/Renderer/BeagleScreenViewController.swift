@@ -25,7 +25,11 @@ public protocol BeagleControllerProtocol: NSObjectProtocol {
     var screenType: ScreenType { get }
     var screen: Screen? { get }
     
-    func addBinding(_ update: @escaping () -> Void)
+    func setIdentifier(_ id: String?, in view: UIView)
+    func setContext(_ context: Context, in view: UIView)
+    
+    func addOnInit(_ onInit: [RawAction], in view: UIView)
+    func addBinding<T: Decodable>(expression: ContextExpression, in view: UIView, update: @escaping (T?) -> Void)
     
     func execute(actions: [RawAction]?, origin: UIView)
     func execute(actions: [RawAction]?, with contextId: String, and contextValue: DynamicObject, origin: UIView)
@@ -49,6 +53,8 @@ public class BeagleScreenViewController: BeagleController {
     lazy var renderer = dependencies.renderer(self)
     
     private var bindings: [() -> Void] = []
+    
+    private var onInit: [(UIView, [RawAction])] = []
     
     private var navigationControllerId: String?
     
@@ -106,9 +112,27 @@ public class BeagleScreenViewController: BeagleController {
     public var screen: Screen? {
         return viewModel.screen
     }
-        
-    public func addBinding(_ update: @escaping () -> Void) {
-        bindings.append(update)
+    
+    public func addOnInit(_ onInit: [RawAction], in view: UIView) {
+        self.onInit.append((view, onInit))
+    }
+    
+    public func addBinding<T: Decodable>(expression: ContextExpression, in view: UIView, update: @escaping (T?) -> Void) {
+        bindings.append { [weak self, weak view] in
+            guard let self = self else { return }
+            view?.configBinding(
+                for: expression,
+                completion: self.bindBlock(view: view, update: update)
+            )
+        }
+    }
+    
+    private func bindBlock<T: Decodable>(view: UIView?, update: @escaping (T?) -> Void) -> (T?) -> Void {
+        return { [weak self, weak view] value in
+            update(value)
+            view?.yoga.markDirty()
+            self?.viewIfLoaded?.setNeedsLayout()
+        }
     }
     
     func configBindings() {
@@ -158,9 +182,17 @@ public class BeagleScreenViewController: BeagleController {
     }
     
     public override func viewDidLayoutSubviews() {
+        executeOnInit()
         configBindings()
         layoutManager.applyLayout()
         super.viewDidLayoutSubviews()
+    }
+    
+    private func executeOnInit() {
+        for (view, actions) in onInit {
+            execute(actions: actions, origin: view)
+        }
+        onInit.removeAll()
     }
     
     private func createContent() {
@@ -248,6 +280,16 @@ public class BeagleScreenViewController: BeagleController {
     
     private func notifyBeagleNavigation(state: ServerDrivenState) {
         beagleNavigation?.serverDrivenStateDidChange(to: state, at: self)
+    }
+}
+
+extension BeagleControllerProtocol {
+    public func setIdentifier(_ id: String?, in view: UIView) {
+        dependencies.viewConfigurator(view).setup(id: id)
+    }
+    
+    public func setContext(_ context: Context, in view: UIView) {
+        view.setContext(context)
     }
 }
 

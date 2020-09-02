@@ -33,6 +33,7 @@ class ListViewTests: XCTestCase {
             - some: Direction.vertical
           ▿ iteratorName: Optional<String>
             - some: "\(component.iteratorName ?? "")"
+          - key: Optional<String>.none
           - onInit: Optional<Array<RawAction>>.none
           - onScrollEnd: Optional<Array<RawAction>>.none
           - scrollThreshold: Optional<Int>.none

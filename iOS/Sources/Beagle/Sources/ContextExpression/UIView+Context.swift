@@ -191,9 +191,10 @@ extension UIView {
         }
         guard let context = contextMap[id] else {
             let observable = (parentContext ?? superview)?.getContext(with: id)
-            if let contextObservable = observable {
-                contextMap[id] = contextObservable
-            }
+            // Cache disabled 👇
+            // if let contextObservable = observable {
+            //     contextMap[id] = contextObservable
+            // }
             return observable
         }
         return context
@@ -210,6 +211,14 @@ extension UIView {
         } else {
             contextMap[context.id] = Observable(value: context)
         }
+    }
+    
+    func getContextValue(_ contextId: String) -> DynamicObject? {
+        let global = dependencies.globalContext
+        guard !global.isGlobal(id: contextId) else {
+            return global.context.value.value
+        }
+        return contextMap[contextId]?.value.value
     }
     
     // MARK: Private

@@ -17,6 +17,33 @@
 import UIKit
 import BeagleSchema
 
+extension ListView: ServerDrivenComponent {
+
+    private var path: Path? {
+        if let key = key {
+            return Path(rawValue: key)
+        }
+        return nil
+    }
+    
+    public func toView(renderer: BeagleRenderer) -> UIView {
+        let view = ListViewUIComponent(
+            model: ListViewUIComponent.Model(
+                key: path,
+                direction: direction ?? .vertical,
+                template: template,
+                iteratorName: iteratorName ?? "item",
+                onScrollEnd: onScrollEnd,
+                scrollThreshold: CGFloat(scrollThreshold ?? 100),
+                useParentScroll: useParentScroll ?? false
+            ),
+            renderer: renderer
+        )
+        renderer.observe(dataSource, andUpdate: \.items, in: view)
+        return view
+    }
+}
+
 extension ListView.Direction {
     var scrollDirection: UICollectionView.ScrollDirection {
         switch self {
@@ -34,28 +61,20 @@ extension ListView.Direction {
             return .row
         }
     }
-}
-
-extension ListView: ServerDrivenComponent {
-
-    public func toView(renderer: BeagleRenderer) -> UIView {
-        let view = ListViewUIComponent(
-            model: ListViewUIComponent.Model(
-                listViewItems: nil,
-                direction: direction ?? .vertical,
-                template: template,
-                iteratorName: iteratorName ?? "item",
-                onScrollEnd: onScrollEnd,
-                scrollThreshold: CGFloat(scrollThreshold ?? 100),
-                useParentScroll: useParentScroll ?? false
-            ),
-            renderer: renderer
-        )
-        
-        renderer.controller.addBinding {
-            renderer.controller.execute(actions: self.onInit, origin: view)
+    var sizeKeyPath: WritableKeyPath<CGSize, CGFloat> {
+        switch self {
+        case .vertical:
+            return \.height
+        case .horizontal:
+            return \.width
         }
-        renderer.observe(dataSource, andUpdate: \.listViewItems, in: view)
-        return view
+    }
+    var pointKeyPath: WritableKeyPath<CGPoint, CGFloat> {
+        switch self {
+        case .vertical:
+            return \.y
+        case .horizontal:
+            return \.x
+        }
     }
 }

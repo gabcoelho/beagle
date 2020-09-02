@@ -50,10 +50,8 @@ final class ListViewTests: XCTestCase {
     private lazy var controller = BeagleScreenViewController(ComponentDummy())
     
     private func renderListView(_ listComponent: ListView) -> UIView {
-        let renderer = BeagleRenderer(controller: controller)
-        let view = renderer.render(listComponent)
-        controller.configBindings()
-        return view
+        let host = ComponentHostController(listComponent, renderer: controller.renderer)
+        return host.view
     }
     
     func createListView(
@@ -94,7 +92,7 @@ final class ListViewTests: XCTestCase {
         )
     }
     
-// MARK: - Testing Direction
+    // MARK: - Testing Direction
     
     let simpleContext: DynamicObject = ["L", "I", "S", "T", "V", "I", "E", "W"]
     
@@ -110,41 +108,41 @@ final class ListViewTests: XCTestCase {
     }
     
     func testVerticalDirection() {
-          let component = createListView(
-              valueContext: simpleContext,
-              direction: .vertical
-          )
-
-          let view = renderListView(component)
-
-          assertSnapshotImage(view, size: imageSize)
-      }
+        let component = createListView(
+            valueContext: simpleContext,
+            direction: .vertical
+        )
+        
+        let view = renderListView(component)
+        
+        assertSnapshotImage(view, size: imageSize)
+    }
     
     // MARK: - Testing Context With Different Sizes
     
     let contextDifferentSizes: DynamicObject = ["LIST", "VIEW", "1", "LIST VIEW", "TEST 1", "TEST LIST VIEW", "12345"]
     
     func testHorizontalDirectionWithDifferentSizes() {
-         let component = createListView(
-             valueContext: contextDifferentSizes,
-             direction: .horizontal
-         )
-
-         let view = renderListView(component)
-
-         assertSnapshotImage(view, size: imageSize)
-     }
-     
-     func testVerticalDirectionWithDifferentSizes() {
-           let component = createListView(
-               valueContext: contextDifferentSizes,
-               direction: .vertical
-           )
-
-           let view = renderListView(component)
-
-           assertSnapshotImage(view, size: imageSize)
-       }
+        let component = createListView(
+            valueContext: contextDifferentSizes,
+            direction: .horizontal
+        )
+        
+        let view = renderListView(component)
+        
+        assertSnapshotImage(view, size: imageSize)
+    }
+    
+    func testVerticalDirectionWithDifferentSizes() {
+        let component = createListView(
+            valueContext: contextDifferentSizes,
+            direction: .vertical
+        )
+        
+        let view = renderListView(component)
+        
+        assertSnapshotImage(view, size: imageSize)
+    }
     
     // MARK: - Testing Execute Action onScrollEnd
 
@@ -188,11 +186,10 @@ final class ListViewTests: XCTestCase {
     }
     
     func testVerticalWithAction() {
-        
         let expectation = XCTestExpectation(description: "Execute onScrollEnd")
-        
-        let action = CustomAction(expectation: expectation)
-        
+        let action = ActionStub { _, _ in
+            expectation.fulfill()
+        }
         let component = createListViewWithAction(
             direction: .vertical,
             action: action
@@ -206,13 +203,12 @@ final class ListViewTests: XCTestCase {
         
         XCTAssertEqual(view?.onScrollEndExecuted, true)
     }
-
+    
     func testHorizontalWithAction() {
-        
         let expectation = XCTestExpectation(description: "Execute onScrollEnd")
-        
-        let action = CustomAction(expectation: expectation)
-        
+        let action = ActionStub { _, _ in
+            expectation.fulfill()
+        }
         let component = createListViewWithAction(
             direction: .horizontal,
             action: action
@@ -228,35 +224,23 @@ final class ListViewTests: XCTestCase {
     }
 }
 
-struct CustomAction: Action {
+// MARK: - Testing Helpers
+
+struct ActionStub: Action {
     
-    let verify = false
-    let expectation: XCTestExpectation
+    let execute: ((BeagleController, UIView) -> Void)?
     
-    init(from decoder: Decoder) throws {
-        fatalError("Not implemented!")
+    init(execute: @escaping (BeagleController, UIView) -> Void) {
+        self.execute = execute
     }
     
-    init(expectation: XCTestExpectation) {
-        self.expectation = expectation
+    init(from decoder: Decoder) throws {
+        execute = nil
     }
     
     func execute(controller: BeagleController, origin: UIView) {
-        expectation.fulfill()
+        execute?(controller, origin)
     }
-    
-}
-
-// MARK: - Testing Helpers
-
-private class ComponentWithRequestViewSpy: UIView, HTTPRequestCanceling {
-
-    private(set) var cancelHTTPRequestCalled = false
-    
-    func cancelHTTPRequest() {
-        cancelHTTPRequestCalled = true
-    }
-
 }
 
 // MARK: - Tests deprecated

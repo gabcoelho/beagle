@@ -17,35 +17,35 @@
 import UIKit
 import BeagleSchema
 
-struct ListItemContextResolver {
+private struct CellsContextManager {
     
     private var orphanCells = [Int: ListViewCell]()
-    private var contexts = [Int: Context]()
+    
+    private var itemContexts = [Int: [String: DynamicObject]]()
     
     mutating func track(orphanCell cell: ListViewCell) {
-        if let item = cell.item {
-            orphanCells[item] = cell
+        if let itemHash = cell.itemHash {
+            orphanCells[itemHash] = cell
         }
     }
     
-    mutating func reuse(cell: ListViewCell, contextName: String) {
-        guard let item = cell.item else { return }
-        contexts[item] = cell.itemContext(named: contextName)
-        orphanCells.removeValue(forKey: item)
+    mutating func reuse(cell: ListViewCell) {
+        guard let itemHash = cell.itemHash else { return }
+        itemContexts[itemHash] = cell.viewContexts.reduce(into: [:]) { result, entry in
+            let (view, contexts) = entry
+            for context in contexts {
+                let value = view.getContextValue(context.id)
+                result?[context.id] = value
+            }
+        }
+        orphanCells.removeValue(forKey: itemHash)
     }
     
-    mutating func context(for item: Int, named contextName: String) -> Context? {
-        if let orphan = orphanCells[item] {
-            reuse(cell: orphan, contextName: contextName)
+    mutating func contexts(for itemHash: Int) -> [String: DynamicObject]? {
+        if let orphan = orphanCells[itemHash] {
+            reuse(cell: orphan)
         }
-        return contexts[item]
-    }
-    
-    mutating func reset() {
-        while let (_, cell) = orphanCells.popFirst() {
-            cell.item = nil
-        }
-        contexts.removeAll()
+        return itemContexts[itemHash]
     }
     
 }
@@ -54,51 +54,30 @@ final class ListViewUIComponent: UIView {
     
     // MARK: - Properties
     
-    var contextResolver = ListItemContextResolver()
-    var renderer: BeagleRenderer
-    var model: Model
+    private var cellsContextManager = CellsContextManager()
+    private var itemsSize = [Int: CGSize]()
     
-    var listViewItems: [DynamicObject]? {
-        get { model.listViewItems }
-        set {
-            model.listViewItems = newValue
-            contextResolver.reset()
-            collectionView.reloadData()
+    let model: Model
+    
+    var items: [DynamicObject]? = [] {
+        didSet {
+            listController.collectionView.reloadData()
             onScrollEndExecuted = false
             executeOnScrollEndIfNeededAfterLayout()
         }
     }
     
-    // MARK: - UIComponents
+    let listController: ListViewController
     
-    lazy var collectionViewFlowLayout: UICollectionViewFlowLayout = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = model.direction.scrollDirection
-        layout.minimumInteritemSpacing = 0
-        layout.minimumLineSpacing = 0
-        layout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
-        return layout
-    }()
+    private(set) var onScrollEndExecuted = false
     
-    lazy var collectionView: UICollectionView = {
-        let collection = UICollectionView(
-            frame: .zero,
-            collectionViewLayout: collectionViewFlowLayout
-        )
-        collection.isScrollEnabled = !model.useParentScroll
-        collection.backgroundColor = .clear
-        collection.register(ListViewCell.self, forCellWithReuseIdentifier: "ListViewCell")
-        collection.translatesAutoresizingMaskIntoConstraints = true
-        collection.dataSource = self
-        collection.delegate = self
-        return collection
-    }()
+    lazy var renderer = BeagleRenderer(controller: listController)
     
     // MARK: - Initialization
     
     init(model: Model, renderer: BeagleRenderer) {
         self.model = model
-        self.renderer = renderer
+        self.listController = ListViewController(renderer: renderer)
         super.init(frame: .zero)
         setupViews()
     }
@@ -108,19 +87,39 @@ final class ListViewUIComponent: UIView {
     }
     
     private func setupViews() {
-        addSubview(collectionView)
+        let layout = listController.collectionViewFlowLayout
+        layout.scrollDirection = model.direction.scrollDirection
+        
+        let collection = listController.collectionView
+        collection.dataSource = self
+        collection.delegate = self
+        
+        let parentController = listController.renderer.controller
+        parentController.addChild(listController)
+        addSubview(listController.view)
+        listController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        listController.view.frame = bounds
+        listController.didMove(toParent: parentController)
     }
     
     override func layoutSubviews() {
-        collectionView.frame = bounds
-        collectionView.reloadData()
-        executeOnScrollEndIfNeededAfterLayout()
         super.layoutSubviews()
+        executeOnScrollEndIfNeededAfterLayout()
     }
     
-    // MARK: - onScrollEnd
+    // MARK: - Cell Sizing
     
-    private(set) var onScrollEndExecuted = false
+    func saveSize(_ size: CGSize, forItem itemHash: Int) {
+        itemsSize[itemHash] = size
+    }
+    
+    func invalidateSize(cell: ListViewCell) {
+        if listController.collectionView.indexPath(for: cell) != nil {
+            listController.collectionViewFlowLayout.invalidateLayout()
+        }
+    }
+    
+    // MARK: - Handle Scroll
     
     private func executeOnScrollEndIfNeededAfterLayout() {
         let displayLink = CADisplayLink(
@@ -139,8 +138,9 @@ final class ListViewUIComponent: UIView {
     private func executeOnScrollEndIfNeeded() {
         guard !onScrollEndExecuted else { return }
         
-        let contentSize = collectionView.contentSize[keyPath: model.direction.sizeKeyPath]
-        let contentOffset = collectionView.contentOffset[keyPath: model.direction.pointKeyPath]
+        let collection = listController.collectionView
+        let contentSize = collection.contentSize[keyPath: model.direction.sizeKeyPath]
+        let contentOffset = collection.contentOffset[keyPath: model.direction.pointKeyPath]
         let offset = contentOffset + frame.size[keyPath: model.direction.sizeKeyPath]
         
         if (contentSize > 0) && (offset / contentSize * 100 >= model.scrollThreshold) {
@@ -148,13 +148,12 @@ final class ListViewUIComponent: UIView {
             renderer.controller.execute(actions: model.onScrollEnd, origin: self)
         }
     }
-    
 }
 
 // MARK: - Model
 extension ListViewUIComponent {
     struct Model {
-        var listViewItems: [DynamicObject]?
+        var key: Path?
         var direction: ListView.Direction
         var template: RawComponent
         var iteratorName: String
@@ -164,73 +163,177 @@ extension ListViewUIComponent {
     }
 }
 
-// MARK: UICollectionViewDataSource
+// MARK: CollectionView Data Source
 
 extension ListViewUIComponent: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return listViewItems?.count ?? 0
+        return items?.count ?? 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ListViewCell", for: indexPath)
-        if let cell = cell as? ListViewCell {
-            contextResolver.reuse(cell: cell, contextName: model.iteratorName)
-            cell.configure(item: indexPath.item, listView: self)
+        if let cell = cell as? ListViewCell, let item = items?[indexPath.item] {
+            cellsContextManager.reuse(cell: cell)
+            listController.delegate = cell
+            
+            let itemKey = keyFor(item)
+            let hash = hashFor(item: item, withKey: itemKey)
+            let key = itemKey ?? String(indexPath.item)
+            let contexts = cellsContextManager.contexts(for: hash)
+            
+            cell.configure(hash: hash, key: key, item: item, contexts: contexts, listView: self)
         }
-        
         return cell
     }
     
+    private func keyFor(_ item: DynamicObject) -> String? {
+        if let path = model.key {
+            switch item[path] {
+            case .int(let value):
+                return String(value)
+            case .double(let value):
+                return String(value)
+            case .string(let value):
+                return value
+            case .empty, .bool, .array, .dictionary, .expression:
+                break
+            }
+        }
+        return nil
+    }
+    
+    private func hashFor(item: DynamicObject, withKey key: String?) -> Int {
+        if let key = key {
+            return key.hashValue
+        }
+        return item.hashValue
+    }
 }
 
-// MARK: UICollectionViewDelegateFlowLayout
+// MARK: CollectionView Delegate
 
 extension ListViewUIComponent: UICollectionViewDelegateFlowLayout {
     
-    func collectionView(
-        _ collectionView: UICollectionView,
-        layout collectionViewLayout: UICollectionViewLayout,
-        sizeForItemAt indexPath: IndexPath
-    ) -> CGSize {
-        // The value returned here acts as the estimated sized, the frame size
-        // is returned to create as few cells as possible.
-        // The final size is calculated at ListViewCell.configure(item:listView:)
-        // and set at ListViewCell.preferredLayoutAttributesFitting(_:).
-        return frame.size
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        var size = collectionView.frame.size
+        guard let items = items, indexPath.item < items.count else {
+            return size
+        }
+        
+        let item = items[indexPath.item]
+        let itemKey = keyFor(item)
+        let itemHash = hashFor(item: item, withKey: itemKey)
+        
+        if let calculatedSize = itemsSize[itemHash] {
+            let keyPath = model.direction.sizeKeyPath
+            size[keyPath: keyPath] = calculatedSize[keyPath: keyPath]
+        }
+        return size
     }
-    
-    func collectionView(
-        _ collectionView: UICollectionView,
-        didEndDisplaying cell: UICollectionViewCell,
-        forItemAt indexPath: IndexPath
-    ) {
+        
+    func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if let cell = cell as? ListViewCell {
-            contextResolver.track(orphanCell: cell)
+            cellsContextManager.track(orphanCell: cell)
         }
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         executeOnScrollEndIfNeeded()
     }
-    
 }
 
-extension ListView.Direction {
-    fileprivate var sizeKeyPath: KeyPath<CGSize, CGFloat> {
-        switch self {
-        case .vertical:
-            return \.height
-        case .horizontal:
-            return \.width
-        }
+final class ListViewController: UIViewController {
+    
+    weak var delegate: ListViewControllerDelegate?
+    
+    fileprivate lazy var collectionView: UICollectionView = {
+        let collection = UICollectionView(
+            frame: .zero,
+            collectionViewLayout: collectionViewFlowLayout
+        )
+        collection.backgroundColor = .clear
+        collection.register(ListViewCell.self, forCellWithReuseIdentifier: "ListViewCell")
+        collection.translatesAutoresizingMaskIntoConstraints = true
+        return collection
+    }()
+    
+    fileprivate lazy var collectionViewFlowLayout: UICollectionViewFlowLayout = {
+        let layout = UICollectionViewFlowLayout()
+        layout.minimumInteritemSpacing = 0
+        layout.minimumLineSpacing = 0
+        layout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
+        return layout
+    }()
+    
+    let renderer: BeagleRenderer
+    
+    init(renderer: BeagleRenderer) {
+        self.renderer = renderer
+        super.init(nibName: nil, bundle: nil)
     }
-    fileprivate var pointKeyPath: KeyPath<CGPoint, CGFloat> {
-        switch self {
-        case .vertical:
-            return \.y
-        case .horizontal:
-            return \.x
-        }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func loadView() {
+        view = collectionView
+    }
+}
+
+protocol ListViewControllerDelegate: NSObjectProtocol {
+    
+    func listViewController(_: ListViewController, listIdentifierFor: String?) -> String?
+    
+    func listViewController(_: ListViewController, setContext: Context, in: UIView)
+    
+    func listViewController<T: Decodable>(_: ListViewController, bind: ContextExpression, view: UIView, update: @escaping (T?) -> Void)
+    
+    func listViewController(_: ListViewController, onInit: [RawAction], view: UIView)
+}
+
+extension ListViewController: BeagleControllerProtocol {
+    
+    var dependencies: BeagleDependenciesProtocol {
+        return renderer.controller.dependencies
+    }
+    
+    var serverDrivenState: ServerDrivenState {
+        get { return renderer.controller.serverDrivenState }
+        set { renderer.controller.serverDrivenState = newValue }
+    }
+    
+    var screenType: ScreenType {
+        return renderer.controller.screenType
+    }
+    
+    var screen: Screen? {
+        return renderer.controller.screen
+    }
+    
+    public func setIdentifier(_ id: String?, in view: UIView) {
+        let newId = delegate?.listViewController(self, listIdentifierFor: id)
+        renderer.controller.setIdentifier(newId, in: view)
+    }
+    
+    func setContext(_ context: Context, in view: UIView) {
+        delegate?.listViewController(self, setContext: context, in: view)
+    }
+    
+    func addBinding<T: Decodable>(expression: ContextExpression, in view: UIView, update: @escaping (T?) -> Void) {
+        delegate?.listViewController(self, bind: expression, view: view, update: update)
+    }
+    
+    func addOnInit(_ onInit: [RawAction], in view: UIView) {
+        delegate?.listViewController(self, onInit: onInit, view: view)
+    }
+    
+    func execute(actions: [RawAction]?, origin: UIView) {
+        renderer.controller.execute(actions: actions, origin: origin)
+    }
+    
+    func execute(actions: [RawAction]?, with contextId: String, and contextValue: DynamicObject, origin: UIView) {
+        renderer.controller.execute(actions: actions, with: contextId, and: contextValue, origin: origin)
     }
 }
