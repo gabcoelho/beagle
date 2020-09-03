@@ -71,7 +71,7 @@ final class ListViewUIComponent: UIView {
     
     private(set) var onScrollEndExecuted = false
     
-    lazy var renderer = BeagleRenderer(controller: listController)
+    lazy var renderer = listController.dependencies.renderer(listController)
     
     // MARK: - Initialization
     
