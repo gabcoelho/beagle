@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-public struct ListView: RawWidget, HasContext, InitiableComponent, AutoInitiable {
+public struct ListView: RawWidget, HasContext, InitiableComponent {
     
     public var context: Context?
     public let onInit: [RawAction]?
@@ -28,7 +28,6 @@ public struct ListView: RawWidget, HasContext, InitiableComponent, AutoInitiable
     public let useParentScroll: Bool?
     public var widgetProperties: WidgetProperties
     
-// sourcery:inline:auto:ListView.Init
     public init(
         context: Context? = nil,
         onInit: [RawAction]? = nil,
@@ -40,7 +39,7 @@ public struct ListView: RawWidget, HasContext, InitiableComponent, AutoInitiable
         onScrollEnd: [RawAction]? = nil,
         scrollThreshold: Int? = nil,
         useParentScroll: Bool? = nil,
-        widgetProperties: WidgetProperties = WidgetProperties()
+        widgetProperties: WidgetProperties = WidgetProperties(style: Style())
     ) {
         self.context = context
         self.onInit = onInit
@@ -54,7 +53,6 @@ public struct ListView: RawWidget, HasContext, InitiableComponent, AutoInitiable
         self.useParentScroll = useParentScroll
         self.widgetProperties = widgetProperties
     }
-// sourcery:end
     
     // MARK: Deprecated initializers
     
@@ -129,7 +127,7 @@ extension ListView: Decodable {
         onScrollEnd = try container.decodeIfPresent(forKey: .onScrollEnd)
         scrollThreshold = try container.decodeIfPresent(Int.self, forKey: .scrollThreshold)
         useParentScroll = try container.decodeIfPresent(Bool.self, forKey: .useParentScroll)
-        widgetProperties = try WidgetProperties(from: decoder)
+        widgetProperties = try WidgetProperties(listFrom: decoder)
         
         if container.contains(.children) {
             template = Self.templateFor(
@@ -143,6 +141,22 @@ extension ListView: Decodable {
             template = try container.decode(forKey: .template)
             self.iteratorName = iteratorName
         }
+    }
+}
+
+extension WidgetProperties {
+   private enum DefaultCodingKeys: String, CodingKey {
+        case id
+        case style
+        case accessibility
+    }
+
+    fileprivate init(listFrom decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DefaultCodingKeys.self)
+
+        id = try container.decodeIfPresent(String.self, forKey: .id)
+        style = try container.decodeIfPresent(Style.self, forKey: .style) ?? Style()
+        accessibility = try container.decodeIfPresent(Accessibility.self, forKey: .accessibility)
     }
 }
 
