@@ -77,7 +77,17 @@ class ListViewTests: XCTestCase {
           ▿ widgetProperties: WidgetProperties
             - accessibility: Optional<Accessibility>.none
             - id: Optional<String>.none
-            - style: Optional<Style>.none
+            ▿ style: Optional<Style>
+              ▿ some: Style
+                - backgroundColor: Optional<String>.none
+                - cornerRadius: Optional<CornerRadius>.none
+                - display: Optional<Display>.none
+                - flex: Optional<Flex>.none
+                - margin: Optional<EdgeValue>.none
+                - padding: Optional<EdgeValue>.none
+                - position: Optional<EdgeValue>.none
+                - positionType: Optional<PositionType>.none
+                - size: Optional<Size>.none
         """)
     }
 
