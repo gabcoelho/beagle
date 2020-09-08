@@ -38,7 +38,6 @@ final class ListViewController: UIViewController {
             collectionViewLayout: collectionViewFlowLayout
         )
         collection.backgroundColor = .clear
-        collection.register(ListViewCell.self, forCellWithReuseIdentifier: "ListViewCell")
         collection.translatesAutoresizingMaskIntoConstraints = true
         return collection
     }()
@@ -53,8 +52,11 @@ final class ListViewController: UIViewController {
     
     let renderer: BeagleRenderer
     
+    private weak var beagleController: BeagleController?
+    
     init(renderer: BeagleRenderer) {
         self.renderer = renderer
+        self.beagleController = renderer.controller
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -83,12 +85,12 @@ extension ListViewController: BeagleControllerProtocol {
     }
     
     var screen: Screen? {
-        return renderer.controller.screen
+        return beagleController?.screen
     }
     
     public func setIdentifier(_ id: String?, in view: UIView) {
         let newId = delegate?.listViewController(self, listIdentifierFor: id)
-        renderer.controller.setIdentifier(newId, in: view)
+        beagleController?.setIdentifier(newId, in: view)
     }
     
     func setContext(_ context: Context, in view: UIView) {
@@ -104,11 +106,11 @@ extension ListViewController: BeagleControllerProtocol {
     }
     
     func execute(actions: [RawAction]?, origin: UIView) {
-        renderer.controller.execute(actions: actions, origin: origin)
+        beagleController?.execute(actions: actions, origin: origin)
     }
     
     func execute(actions: [RawAction]?, with contextId: String, and contextValue: DynamicObject, origin: UIView) {
-        renderer.controller.execute(actions: actions, with: contextId, and: contextValue, origin: origin)
+        beagleController?.execute(actions: actions, with: contextId, and: contextValue, origin: origin)
     }
     
     func setNeedsLayout(component: UIView) {

@@ -54,6 +54,7 @@ final class ListViewUIComponent: UIView {
     
     // MARK: - Properties
     
+    private var cellsReadyToDisplay = [Int: ListViewCell]()
     private var cellsContextManager = CellsContextManager()
     private var itemsSize = [Int: CGSize]()
     
@@ -91,6 +92,7 @@ final class ListViewUIComponent: UIView {
         layout.scrollDirection = model.direction.scrollDirection
         
         let collection = listController.collectionView
+        collection.register(ListViewCell.self, forCellWithReuseIdentifier: "ListViewCell")
         collection.dataSource = self
         collection.delegate = self
         
@@ -107,7 +109,44 @@ final class ListViewUIComponent: UIView {
         executeOnScrollEndIfNeededAfterLayout()
     }
     
-    // MARK: - Cell Sizing
+    // MARK: - Sizing
+    
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
+        let collection = listController.collectionView
+        let items = collectionView(collection, numberOfItemsInSection: 0)
+        guard items > 0 else { return .zero }
+        
+        let directionValue: WritableKeyPath<CGSize, CGFloat>
+        let otherValue: WritableKeyPath<CGSize, CGFloat>
+        switch model.direction {
+        case .vertical:
+            (directionValue, otherValue) = (\.height, \.width)
+        case .horizontal:
+            (directionValue, otherValue) = (\.width, \.height)
+        }
+        
+        var item = 0
+        var listSize = CGSize.zero
+        while item < items && listSize[keyPath: directionValue] < size[keyPath: directionValue] {
+            let indexPath = IndexPath(item: item, section: 0)
+            let cell = collection.cellForItem(at: indexPath) ?? collectionView(collection, cellForItemAt: indexPath)
+            if let listViewCell = cell as? ListViewCell {
+                let cellSize = listViewCell.templateIntrinsicSize
+                listSize[keyPath: directionValue] += cellSize[keyPath: directionValue]
+                let otherMeasure = cellSize[keyPath: otherValue]
+                if listSize[keyPath: otherValue] < otherMeasure {
+                    listSize[keyPath: otherValue] = otherMeasure
+                }
+            }
+            item += 1
+        }
+        
+        if item > 0 && item < items {
+            let average = listSize[keyPath: directionValue] / CGFloat(item)
+            listSize[keyPath: directionValue] += CGFloat(items - item) * average
+        }
+        return listSize
+    }
     
     func saveSize(_ size: CGSize, forItem itemHash: Int) {
         itemsSize[itemHash] = size
@@ -151,6 +190,7 @@ final class ListViewUIComponent: UIView {
 }
 
 // MARK: - Model
+
 extension ListViewUIComponent {
     struct Model {
         var key: Path?
@@ -163,7 +203,7 @@ extension ListViewUIComponent {
     }
 }
 
-// MARK: CollectionView Data Source
+// MARK: - CollectionView Data Source
 
 extension ListViewUIComponent: UICollectionViewDataSource {
     
@@ -172,18 +212,28 @@ extension ListViewUIComponent: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ListViewCell", for: indexPath)
-        if let cell = cell as? ListViewCell, let item = items?[indexPath.item] {
-            cellsContextManager.reuse(cell: cell)
-            listController.delegate = cell
-            
-            let itemKey = keyFor(item)
-            let hash = hashFor(item: item, withKey: itemKey)
-            let key = itemKey ?? String(indexPath.item)
-            let contexts = cellsContextManager.contexts(for: hash)
-            
-            cell.configure(hash: hash, key: key, item: item, contexts: contexts, listView: self)
+        guard let item = items?[indexPath.item] else {
+            return UICollectionViewCell()
         }
+        let itemKey = keyFor(item)
+        let hash = hashFor(item: item, withKey: itemKey)
+        
+        if let cell = cellsReadyToDisplay[hash] {
+            return cell
+        }
+        
+        let collectionCell = collectionView.dequeueReusableCell(withReuseIdentifier: "ListViewCell", for: indexPath)
+        guard let cell = collectionCell as? ListViewCell else {
+            return collectionCell
+        }
+        cellsContextManager.reuse(cell: cell)
+        listController.delegate = cell
+        
+        let key = itemKey ?? String(indexPath.item)
+        let contexts = cellsContextManager.contexts(for: hash)
+        
+        cell.configure(hash: hash, key: key, item: item, contexts: contexts, listView: self)
+        cellsReadyToDisplay[hash] = cell
         return cell
     }
     
@@ -211,7 +261,7 @@ extension ListViewUIComponent: UICollectionViewDataSource {
     }
 }
 
-// MARK: CollectionView Delegate
+// MARK: - CollectionView Delegate
 
 extension ListViewUIComponent: UICollectionViewDelegateFlowLayout {
     
@@ -230,6 +280,12 @@ extension ListViewUIComponent: UICollectionViewDelegateFlowLayout {
             size[keyPath: keyPath] = calculatedSize[keyPath: keyPath]
         }
         return size
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        if let itemHash = (cell as? ListViewCell)?.itemHash {
+            cellsReadyToDisplay.removeValue(forKey: itemHash)
+        }
     }
         
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {

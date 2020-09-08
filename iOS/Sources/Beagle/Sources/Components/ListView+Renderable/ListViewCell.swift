@@ -29,6 +29,13 @@ final class ListViewCell: UICollectionViewCell {
     private var templateContainer: TemplateContainer?
     private weak var listView: ListViewUIComponent?
     
+    var templateIntrinsicSize: CGSize {
+        guard let template = templateContainer else { return .zero }
+        return template.yoga.calculateLayout(
+            with: CGSize(width: CGFloat.nan, height: CGFloat.nan)
+        )
+    }
+    
     func configure(
         hash: Int,
         key: String,
@@ -49,23 +56,28 @@ final class ListViewCell: UICollectionViewCell {
             container.setContext(Context(id: listView.model.iteratorName, value: item))
             onInits.forEach(listView.listController.execute)
         }
+        
+        addBindings()
     }
     
     private func templateContainer(for listView: ListViewUIComponent) -> TemplateContainer {
         if let templateContainer = self.templateContainer {
             return templateContainer
         }
+        let flexDirection = listView.model.direction.flexDirection
         let template = listView.renderer.render(listView.model.template)
         let container = TemplateContainer(template: template)
         container.parentContext = listView
         listView.listController.dependencies.style(container).setup(
-            Style().flex(Flex()
-                .flexDirection(listView.model.direction.flexDirection)
-                .shrink(0)
-            )
+            Style().flex(Flex().flexDirection(flexDirection).shrink(0))
         )
         templateContainer = container
         contentView.addSubview(container)
+        
+        contentView.yoga.overflow = .scroll
+        listView.listController.dependencies.style(contentView).setup(
+            Style().flex(Flex().flexDirection(flexDirection))
+        )
         
         return container
     }
@@ -111,12 +123,8 @@ final class ListViewCell: UICollectionViewCell {
     }
     
     private func applyLayout(constrainedBy listView: ListViewUIComponent) {
-        let flexDirection = listView.model.direction.flexDirection
-        let style = listView.listController.dependencies.style(contentView)
-        style.setup(Style().flex(Flex().flexDirection(flexDirection)))
-        contentView.yoga.overflow = .scroll
         contentView.frame = listView.bounds
-        style.applyLayout()
+        listView.listController.dependencies.style(contentView).applyLayout()
     }
 }
 
