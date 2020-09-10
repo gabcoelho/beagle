@@ -222,7 +222,7 @@ extension ListViewUIComponent: UICollectionViewDataSource {
             return cell
         }
         
-        let collectionCell = collectionView.dequeueReusableCell(withReuseIdentifier: "ListViewCell", for: indexPath)
+        let collectionCell = dequeueCellWithoutPendingActions(collectionView, indexPath: indexPath, itemHash: hash)
         guard let cell = collectionCell as? ListViewCell else {
             return collectionCell
         }
@@ -235,6 +235,19 @@ extension ListViewUIComponent: UICollectionViewDataSource {
         cell.configure(hash: hash, key: key, item: item, contexts: contexts, listView: self)
         cellsReadyToDisplay[hash] = cell
         return cell
+    }
+    
+    private func dequeueCellWithoutPendingActions(_ collection: UICollectionView, indexPath: IndexPath, itemHash: Int) -> UICollectionViewCell {
+        let dequeuedCell = collection.dequeueReusableCell(withReuseIdentifier: "ListViewCell", for: indexPath)
+        if let cell = dequeuedCell as? ListViewCell, cell.hasPendingActions {
+            if cell.itemHash == itemHash {
+                return cell
+            } else if let cellItemHash = cell.itemHash {
+                cellsReadyToDisplay[cellItemHash] = cell
+            }
+            return dequeueCellWithoutPendingActions(collection, indexPath: indexPath, itemHash: itemHash)
+        }
+        return dequeuedCell
     }
     
     private func keyFor(_ item: DynamicObject) -> String? {

@@ -25,6 +25,7 @@ final class ListViewCell: UICollectionViewCell {
     
     private var bindings = [() -> Void]()
     private var onInits = [(actions: [RawAction], view: UIView)]()
+    private var pendingActions = Set<UUID>()
     
     private var templateContainer: TemplateContainer?
     private weak var listView: ListViewUIComponent?
@@ -34,6 +35,11 @@ final class ListViewCell: UICollectionViewCell {
         return template.yoga.calculateLayout(
             with: CGSize(width: CGFloat.nan, height: CGFloat.nan)
         )
+    }
+    
+    var hasPendingActions: Bool {
+        print(" -==--> \(itemKey ?? "") pendingActions: \(pendingActions.count)")
+        return !pendingActions.isEmpty
     }
     
     func configure(
@@ -128,21 +134,21 @@ final class ListViewCell: UICollectionViewCell {
     }
 }
 
-extension ListViewCell: ListViewControllerDelegate {
+extension ListViewCell: ListViewDelegate {
     
-    func listViewController(_ vc: ListViewController, listIdentifierFor id: String?) -> String? {
+    func listIdentifierFor(_ id: String?) -> String? {
         if let id = id, let itemKey = itemKey {
             return "\(id):\(itemKey)"
         }
         return id
     }
     
-    func listViewController(_ vc: ListViewController, setContext context: Context, in view: UIView) {
+    func setContext(_ context: Context, in view: UIView) {
         viewContexts[view, default: []].append(context)
         view.setContext(context)
     }
     
-    func listViewController<T: Decodable>(_ vc: ListViewController, bind: ContextExpression, view: UIView, update: @escaping (T?) -> Void) {
+    func bind<T: Decodable>(_ bind: ContextExpression, view: UIView, update: @escaping (T?) -> Void) {
         bindings.append { [weak self, weak view] in
             guard let self = self else { return }
             view?.configBinding(
@@ -162,8 +168,16 @@ extension ListViewCell: ListViewControllerDelegate {
         }
     }
     
-    func listViewController(_ vc: ListViewController, onInit: [RawAction], view: UIView) {
+    func onInit(_ onInit: [RawAction], view: UIView) {
         onInits.append((onInit, view))
+    }
+    
+    func willExecuteAsyncActionIdentifiedBy(_ uuid: UUID) {
+        pendingActions.insert(uuid)
+    }
+    
+    func didFinishAsyncActionIdentifiedBy(_ uuid: UUID) {
+        pendingActions.remove(uuid)
     }
 }
 

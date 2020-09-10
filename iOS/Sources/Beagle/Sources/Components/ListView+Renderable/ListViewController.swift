@@ -17,20 +17,24 @@
 import UIKit
 import BeagleSchema
 
-protocol ListViewControllerDelegate: NSObjectProtocol {
+protocol ListViewDelegate: NSObjectProtocol {
     
-    func listViewController(_: ListViewController, listIdentifierFor: String?) -> String?
+    func listIdentifierFor(_: String?) -> String?
     
-    func listViewController(_: ListViewController, setContext: Context, in: UIView)
+    func setContext(_: Context, in: UIView)
     
-    func listViewController<T: Decodable>(_: ListViewController, bind: ContextExpression, view: UIView, update: @escaping (T?) -> Void)
+    func bind<T: Decodable>(_: ContextExpression, view: UIView, update: @escaping (T?) -> Void)
     
-    func listViewController(_: ListViewController, onInit: [RawAction], view: UIView)
+    func onInit(_: [RawAction], view: UIView)
+    
+    func willExecuteAsyncActionIdentifiedBy(_: UUID)
+    
+    func didFinishAsyncActionIdentifiedBy(_: UUID)
 }
 
 final class ListViewController: UIViewController {
     
-    weak var delegate: ListViewControllerDelegate?
+    weak var delegate: ListViewDelegate?
     
     private(set) lazy var collectionView: UICollectionView = {
         let collection = UICollectionView(
@@ -89,24 +93,35 @@ extension ListViewController: BeagleControllerProtocol {
     }
     
     public func setIdentifier(_ id: String?, in view: UIView) {
-        let newId = delegate?.listViewController(self, listIdentifierFor: id)
+        let newId = delegate?.listIdentifierFor(id)
         beagleController?.setIdentifier(newId, in: view)
     }
     
     func setContext(_ context: Context, in view: UIView) {
-        delegate?.listViewController(self, setContext: context, in: view)
+        delegate?.setContext(context, in: view)
     }
     
     func addBinding<T: Decodable>(expression: ContextExpression, in view: UIView, update: @escaping (T?) -> Void) {
-        delegate?.listViewController(self, bind: expression, view: view, update: update)
+        delegate?.bind(expression, view: view, update: update)
     }
     
     func addOnInit(_ onInit: [RawAction], in view: UIView) {
-        delegate?.listViewController(self, onInit: onInit, view: view)
+        delegate?.onInit(onInit, view: view)
     }
     
     func execute(actions: [RawAction]?, origin: UIView) {
-        beagleController?.execute(actions: actions, origin: origin)
+        let newActions: [RawAction]? = actions?.reduce(into: []) { result, action in
+            if var asyncAction = action as? AsyncAction {
+                if asyncAction.onFinish == nil {
+                    asyncAction.onFinish = []
+                }
+                asyncAction.onFinish?.append(AsyncActionTracker(uuid: UUID(), delegate: delegate))
+                result?.append(asyncAction)
+            } else {
+                result?.append(action)
+            }
+        }
+        beagleController?.execute(actions: newActions, origin: origin)
     }
     
     func execute(actions: [RawAction]?, with contextId: String, and contextValue: DynamicObject, origin: UIView) {
@@ -116,5 +131,25 @@ extension ListViewController: BeagleControllerProtocol {
     func setNeedsLayout(component: UIView) {
         component.yoga.markDirty()
         collectionViewFlowLayout.invalidateLayout()
+    }
+}
+
+private struct AsyncActionTracker: Action {
+    
+    let uuid: UUID
+    weak var delegate: ListViewDelegate?
+    
+    init(uuid: UUID, delegate: ListViewDelegate?) {
+        self.uuid = uuid
+        self.delegate = delegate
+        delegate?.willExecuteAsyncActionIdentifiedBy(uuid)
+    }
+    
+    init(from decoder: Decoder) throws {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func execute(controller: BeagleController, origin: UIView) {
+        delegate?.didFinishAsyncActionIdentifiedBy(uuid)
     }
 }
