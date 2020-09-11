@@ -38,7 +38,6 @@ final class ListViewCell: UICollectionViewCell {
     }
     
     var hasPendingActions: Bool {
-        print(" -==--> \(itemKey ?? "") pendingActions: \(pendingActions.count)")
         return !pendingActions.isEmpty
     }
     
