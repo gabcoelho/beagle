@@ -16,7 +16,11 @@
 
 package br.com.zup.beagle.sample.builder
 
+import br.com.zup.beagle.core.PositionType
+import br.com.zup.beagle.core.Style
 import br.com.zup.beagle.ext.applyFlex
+import br.com.zup.beagle.ext.applyStyle
+import br.com.zup.beagle.ext.unitReal
 import br.com.zup.beagle.sample.constants.NAVIGATION_BAR_STYLE_DEFAULT
 import br.com.zup.beagle.sample.constants.PATH_SCREEN_DEEP_LINK_ENDPOINT
 import br.com.zup.beagle.sample.constants.SCREEN_ACTION_CLICK_ENDPOINT
@@ -25,8 +29,7 @@ import br.com.zup.beagle.widget.action.Confirm
 import br.com.zup.beagle.widget.action.Navigate
 import br.com.zup.beagle.widget.action.Route
 import br.com.zup.beagle.widget.action.SendRequest
-import br.com.zup.beagle.widget.core.AlignSelf
-import br.com.zup.beagle.widget.core.Flex
+import br.com.zup.beagle.widget.core.*
 import br.com.zup.beagle.widget.layout.Container
 import br.com.zup.beagle.widget.layout.NavigationBar
 import br.com.zup.beagle.widget.layout.NavigationBarItem
@@ -36,36 +39,160 @@ import br.com.zup.beagle.widget.layout.ScrollView
 import br.com.zup.beagle.widget.navigation.Touchable
 import br.com.zup.beagle.widget.ui.Button
 import br.com.zup.beagle.widget.ui.ImagePath.Local
+import br.com.zup.beagle.widget.ui.ListView
 import br.com.zup.beagle.widget.ui.Text
 
 object ActionScreenBuilder : ScreenBuilder {
     override fun build() = Screen(
-        navigationBar = NavigationBar(
-            title = "Beagle Action",
-            showBackButton = true,
-            styleId = NAVIGATION_BAR_STYLE_DEFAULT,
-            navigationBarItems = listOf(
-                NavigationBarItem(
-                    text = "",
-                    image = Local.justMobile("informationImage"),
-                    action = Alert(
-                        title = "Action",
-                        message = "This class handles transition actions between screens in the application. ",
-                        labelOk = "OK"
+        child = Container(
+            children = listOf(
+                Text(
+                    text = "glitch BFF Sample",
+                    styleId = "Title.Big.Bold.BlackDark",
+                    alignment = TextAlignment.CENTER
+                ).applyStyle(
+                    Style(margin = EdgeValue(top = 16.unitReal()),
+                        flex = Flex(alignSelf = AlignSelf.CENTER)
+                    )
+                ),
+                ListView(
+                    direction = ListDirection.VERTICAL,
+                    children = listOf(
+                        Button(
+                            styleId = "Background.Gradient.Glitch",
+                            text = "/textAppearances",
+                            onPress = listOf(
+                                Navigate.PushView(
+                                    route = Route.Remote(
+                                        url = "/textAppearances",
+                                        shouldPrefetch = false
+                                    )
+                                )
+                            )
+                        ).applyStyle(
+                            Style(
+                                margin = EdgeValue(top = 8.unitReal())
+                            )
+                        ),
+                        Button(
+                            styleId = "Background.Gradient.Glitch",
+                            text = "/textAppearances",
+                            onPress = listOf(
+                                Navigate.PushView(
+                                    route = Route.Remote(
+                                        url = "/textAppearances",
+                                        shouldPrefetch = false
+                                    )
+                                )
+                            )
+                        ).applyStyle(
+                            Style(
+                                margin = EdgeValue(top = 8.unitReal())
+                            )
+                        ),
+                        Button(
+                            styleId = "Background.Gradient.Glitch",
+                            text = "/textAppearances",
+                            onPress = listOf(
+                                Navigate.PushView(
+                                    route = Route.Remote(
+                                        url = "/textAppearances",
+                                        shouldPrefetch = false
+                                    )
+                                )
+                            )
+                        ).applyStyle(
+                            Style(
+                                margin = EdgeValue(top = 8.unitReal())
+                            )
+                        ),
+                        Button(
+                            styleId = "Background.Gradient.Glitch",
+                            text = "/textAppearances",
+                            onPress = listOf(
+                                Navigate.PushView(
+                                    route = Route.Remote(
+                                        url = "/textAppearances",
+                                        shouldPrefetch = false
+                                    )
+                                )
+                            )
+                        ).applyStyle(
+                            Style(
+                                margin = EdgeValue(top = 8.unitReal())
+                            )
+                        ),
+                        Button(
+                            styleId = "Background.Gradient.Glitch",
+                            text = "/textAppearances",
+                            onPress = listOf(
+                                Navigate.PushView(
+                                    route = Route.Remote(
+                                        url = "/textAppearances",
+                                        shouldPrefetch = false
+                                    )
+                                )
+                            )
+                        ).applyStyle(
+                            Style(
+                                margin = EdgeValue(top = 8.unitReal())
+                            )
+                        ),
+                        Button(
+                            styleId = "Background.Gradient.Glitch",
+                            text = "/textAppearances",
+                            onPress = listOf(
+                                Navigate.PushView(
+                                    route = Route.Remote(
+                                        url = "/textAppearances",
+                                        shouldPrefetch = false
+                                    )
+                                )
+                            )
+                        ).applyStyle(
+                            Style(
+                                margin = EdgeValue(top = 8.unitReal())
+                            )
+                        ),
+                        Button(
+                            styleId = "Background.Gradient.Glitch",
+                            text = "/textAppearances",
+                            onPress = listOf(
+                                Navigate.PushView(
+                                    route = Route.Remote(
+                                        url = "/textAppearances",
+                                        shouldPrefetch = false
+                                    )
+                                )
+                            )
+                        ).applyStyle(
+                            Style(
+                                margin = EdgeValue(top = 8.unitReal())
+                            )
+                        ),
+                        Button(
+                            styleId = "Background.Gradient.Glitch",
+                            text = "/alertaction",
+                            onPress = listOf(
+                                Navigate.PushView(
+                                    route = Route.Remote(
+                                        url = "/button",
+                                        shouldPrefetch = false
+                                    )
+                                )
+                            )
+                        ).applyStyle(
+                            Style(
+                                margin = EdgeValue(top = 8.unitReal())
+                            )
+                        )
                     )
                 )
             )
-        ),
-        child = ScrollView(
-            children = listOf(
-                getAlertAction(),
-                getNavigateWithPath(),
-                getNavigateWithScreen(),
-                getNavigateWithPathScreen(),
-                getNavigateWithPrefetch(),
-                getNavigateWithDeepLink(),
-                getSendRequestAction(),
-                getConfirmAction()
+        ).applyStyle(
+            style = Style(
+                backgroundColor = "#32a852",
+                margin = EdgeValue(all = 16.unitReal())
             )
         )
     )

@@ -15,7 +15,7 @@
   -->
 
 <resources>
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
@@ -151,5 +151,22 @@
     <style name="DesignSystem.Form.Submit" parent="DesignSystem.Button.Text">
         <item name="android:textColor">@color/colorWhite</item>
         <item name="android:background">@drawable/bg_form_button</item>
+    </style>
+
+    <style name="Background.Gradient.Glitch" parent="DesignSystem.Button.Default">
+        <item name="android:textColor">@color/colorWhite</item>
+        <item name="android:background">@drawable/bg_gradient_button</item>
+        <item name="android:autoLink">all</item>
+        <item name="android:textColorLink">@color/colorWhite</item>
+    </style>
+
+    <style name="Glitch.Primary" parent="Widget.AppCompat.Toolbar">
+        <item name="backgroundColor">@color/colorBlack</item>
+        <item name="android:background">@color/colorBlack</item>
+        <item name="titleTextAppearance">@style/Glitch_CustomTitleToolbar</item>
+    </style>
+
+    <style name="Glitch_CustomTitleToolbar" parent="Widget.AppCompat.Toolbar">
+        <item name="android:textColor">@color/colorWhite</item>
     </style>
 </resources>

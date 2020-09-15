@@ -26,6 +26,7 @@ class AppDesignSystem : DesignSystem() {
         return when (id) {
             "DesignSystem.Navigationbar.Style.Green" -> R.style.DesignSystem_Navigationbar_Style
             "DesignSystem.Toolbar.Center" -> R.style.DesignSystem_Toolbar_Center
+            "Algo.Primary" -> R.style.Glitch_Primary
             else -> R.style.DesignSystem_Toolbar
         }
     }
@@ -72,6 +73,7 @@ class AppDesignSystem : DesignSystem() {
             "DesignSystem.Button.Orange" -> R.style.DesignSystem_Button_Default
             "DesignSystem.Stylish.ButtonAndAppearance" -> R.style.DesignSystem_Stylish_ButtonAndAppearance
             "DesignSystem.Form.Submit" -> R.style.DesignSystem_Form_Submit
+            "Background.Gradient.Glitch" -> R.style.Background_Gradient_Glitch
             else -> android.R.style.Widget_Button
         }
     }

@@ -22,14 +22,12 @@ import br.com.zup.beagle.core.Style
 import br.com.zup.beagle.ext.applyFlex
 import br.com.zup.beagle.ext.applyStyle
 import br.com.zup.beagle.ext.unitReal
-import br.com.zup.beagle.sample.constants.BUTTON_STYLE
-import br.com.zup.beagle.sample.constants.BUTTON_STYLE_APPEARANCE
-import br.com.zup.beagle.sample.constants.CYAN_BLUE
-import br.com.zup.beagle.sample.constants.SCREEN_ACTION_CLICK_ENDPOINT
+import br.com.zup.beagle.sample.constants.*
 import br.com.zup.beagle.widget.Widget
 import br.com.zup.beagle.widget.action.Navigate
 import br.com.zup.beagle.widget.action.Route
 import br.com.zup.beagle.widget.core.EdgeValue
+import br.com.zup.beagle.widget.core.TextAlignment
 import br.com.zup.beagle.widget.layout.Container
 import br.com.zup.beagle.widget.layout.NavigationBar
 import br.com.zup.beagle.widget.layout.NavigationBarItem
@@ -37,52 +35,50 @@ import br.com.zup.beagle.widget.layout.Screen
 import br.com.zup.beagle.widget.layout.ScreenBuilder
 import br.com.zup.beagle.widget.ui.Button
 import br.com.zup.beagle.widget.ui.ImagePath.Local
+import br.com.zup.beagle.widget.ui.Text
 
 object ButtonScreenBuilder : ScreenBuilder {
     override fun build() = Screen(
-        navigationBar = NavigationBar(
-            title = "Beagle Button",
-            showBackButton = true,
-            navigationBarItems = listOf(
-                NavigationBarItem(
-                    text = "",
-                    image = Local.justMobile("informationImage"),
-                    action = Alert(
-                        title = "Button",
-                        message = "This is a widget that will define a button natively using the server " +
-                            "driven information received through Beagle.",
-                        labelOk = "OK"
-                    )
-                )
-            )
-        ),
         child = Container(
             children = listOf(
-                createButton(
-                    text = "Button",
-                    style = Style(
-                        margin = EdgeValue(
-                            top = 15.unitReal()
+                Text(
+                    styleId = SCREEN_TEXT_STYLE,
+                    text = "alert action",
+                    alignment = TextAlignment.CENTER
+                ).applyStyle(
+                    Style(margin = EdgeValue(
+                        top = 32.unitReal()
+                    ))
+                ),
+                Text(
+                    styleId = SCREEN_TEXT_STYLE,
+                    text = "o tocar em um dos botões abaixo, a ação customizada de AlertAction será executada, abrindo a bottomsheet do iti malia.",
+                    alignment = TextAlignment.CENTER
+                ).applyStyle(
+                    Style(margin = EdgeValue(
+                        top = 16.unitReal()
+                    ))
+                ),
+                Button(
+                    styleId = "Background.Gradient.Glitch",
+                    text = "/textAppearances",
+                    onPress = listOf(
+                        Navigate.PushView(
+                            route = Route.Remote(
+                                url = "/textAppearances",
+                                shouldPrefetch = false
+                            )
                         )
                     )
-                ),
-
-                createButton(
-                    text = "Button with style",
-                    styleId = BUTTON_STYLE,
-                    style = Style(
-                        margin = EdgeValue(
-                            top = 15.unitReal()
-                        )
+                ).applyStyle(
+                    Style(
+                        margin = EdgeValue(top = 16.unitReal())
                     )
-                ),
-
-                buttonWithAppearanceAndStyle(text = "Button with Appearance"),
-                buttonWithAppearanceAndStyle(
-                    text = "Button with Appearance and style",
-                    styleId = BUTTON_STYLE_APPEARANCE
                 )
+
             )
+        ).applyStyle(
+            style = Style(backgroundColor = "#a88332")
         )
     )
 

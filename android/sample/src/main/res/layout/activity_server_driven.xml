@@ -20,6 +20,7 @@
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBlack"
     android:orientation="vertical">
 
     <android.support.v7.widget.Toolbar
@@ -33,6 +34,7 @@
 
         <FrameLayout
             android:id="@+id/server_driven_container"
+            android:background="@color/colorBlack"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
