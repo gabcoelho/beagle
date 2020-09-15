@@ -222,6 +222,31 @@ final class ListViewTests: XCTestCase {
         
         XCTAssertEqual(view?.onScrollEndExecuted, true)
     }
+    
+    func testWithActionOnInit() {
+        //Given
+        let expectation = self.expectation(description: "Execute onInit")
+        let controllerSpy = BeagleControllerSpy()
+        controllerSpy.expectation = expectation
+        let renderer = BeagleRenderer(controller: controllerSpy)
+        let component = ListView(
+            context: Context(
+                id: "initialContext",
+                value: ["Test"]
+            ),
+            onInit: [],
+            dataSource: Expression("@{initialContext}"),
+            template: Text("@{item}")
+        )
+        
+        //When
+        _ = renderer.render(component)
+        
+        //Then
+        waitForExpectations(timeout: 5, handler: nil)
+        XCTAssert(controllerSpy.didCalledExecute)
+    }
+    
 }
 
 // MARK: - Testing Helpers
