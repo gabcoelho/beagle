@@ -16,6 +16,7 @@
 
 package br.com.zup.beagle.android.view
 
+import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
@@ -23,10 +24,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import br.com.zup.beagle.android.components.utils.applyBackgroundFromWindowBackgroundTheme
-import br.com.zup.beagle.core.ServerDrivenComponent
 import br.com.zup.beagle.android.data.serializer.BeagleSerializer
 import br.com.zup.beagle.android.utils.toView
 import br.com.zup.beagle.android.widget.UndefinedWidget
+import br.com.zup.beagle.core.ServerDrivenComponent
 
 internal class BeagleFragment : Fragment() {
 
@@ -34,6 +35,8 @@ internal class BeagleFragment : Fragment() {
         val json = arguments?.getString(JSON_SCREEN_KEY) ?: beagleSerializer.serializeComponent(UndefinedWidget())
         beagleSerializer.deserializeComponent(json)
     }
+
+    private lateinit var mListener: OnFragmentCallback
 
     companion object {
 
@@ -53,11 +56,27 @@ internal class BeagleFragment : Fragment() {
         private const val JSON_SCREEN_KEY = "JSON_SCREEN_KEY"
     }
 
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is OnFragmentCallback) {
+            mListener = context
+        } else {
+            throw ClassCastException(context.toString()
+                .toString() + " must implement OnFragmentCallback")
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        mListener.fragmentResume()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
         return context?.let {
             FrameLayout(it).apply {
                 applyBackgroundFromWindowBackgroundTheme(it)
@@ -65,4 +84,8 @@ internal class BeagleFragment : Fragment() {
             }
         }
     }
+}
+
+interface OnFragmentCallback {
+    fun fragmentResume()
 }

@@ -22,7 +22,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ProgressBar
-import br.com.zup.beagle.android.annotation.BeagleComponent
 import br.com.zup.beagle.android.annotation.RegisterController
 import br.com.zup.beagle.android.view.BeagleActivity
 import br.com.zup.beagle.android.view.FragmentTransitionAnimation
@@ -39,7 +38,6 @@ class SampleServerDrivenActivity : BeagleActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_server_driven)
     }
 
@@ -48,13 +46,16 @@ class SampleServerDrivenActivity : BeagleActivity() {
     override fun getToolbar(): Toolbar = mToolbar
 
     override fun onServerDrivenContainerStateChanged(state: ServerDrivenState) {
-        if (state is ServerDrivenState.Loading) {
-            progressBar.visibility = if (state.loading) View.VISIBLE else View.GONE
-            mToolbar.visibility = if (state.loading) View.GONE else View.VISIBLE
+        if (state is ServerDrivenState.Started) {
+            progressBar.visibility = View.VISIBLE
+            mToolbar.visibility = View.GONE
+        }else if(state is ServerDrivenState.Finished){
+            progressBar.visibility = View.GONE
         } else if (state is ServerDrivenState.Error) {
             mFrame.visibility = View.GONE
-            progressBar.visibility = View.GONE
             buttonRetry(state)
+        } else if(state is ServerDrivenState.Success) {
+            mToolbar.visibility = View.VISIBLE
         }
     }
 

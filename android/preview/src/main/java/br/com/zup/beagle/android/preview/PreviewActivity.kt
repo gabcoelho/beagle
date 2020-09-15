@@ -91,4 +91,7 @@ class PreviewActivity : BeagleActivity() {
         beaglePreview.doNotReconnect()
         super.onDestroy()
     }
+
+    override fun fragmentResume() {
+    }
 }
