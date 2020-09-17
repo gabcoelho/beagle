@@ -90,6 +90,7 @@ public class BeagleScreenViewController: BeagleController {
         self.navigationControllerId = controllerId
         super.init(nibName: nil, bundle: nil)
         extendedLayoutIncludesOpaqueBars = true
+        automaticallyAdjustsScrollViewInsets = false
     }
 
     @available(*, unavailable)
