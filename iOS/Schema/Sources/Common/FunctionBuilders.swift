@@ -32,13 +32,6 @@ public struct ChildrenBuilder {
 }
 
 @_functionBuilder
-public struct TabItemBuilder {
-    public static func buildBlock(_ tabItem: TabItem) -> TabItem {
-        return tabItem
-    }
-}
-
-@_functionBuilder
 public struct TabItemsBuilder {
     public static func buildBlock(_ tabItems: TabItem...) -> [TabItem] {
         return tabItems
