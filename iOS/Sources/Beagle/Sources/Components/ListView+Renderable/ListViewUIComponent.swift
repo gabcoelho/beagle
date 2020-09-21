@@ -60,7 +60,7 @@ final class ListViewUIComponent: UIView {
     
     let model: Model
     
-    var items: [DynamicObject]? = [] {
+    var items: [DynamicObject]? {
         didSet {
             listController.collectionView.reloadData()
             onScrollEndExecuted = false
@@ -177,15 +177,19 @@ final class ListViewUIComponent: UIView {
     private func executeOnScrollEndIfNeeded() {
         guard !onScrollEndExecuted else { return }
         
+        if items?.count == 0 || didReachScrollThreshol {
+            onScrollEndExecuted = true
+            renderer.controller.execute(actions: model.onScrollEnd, origin: self)
+        }
+    }
+    
+    private var didReachScrollThreshol: Bool {
         let collection = listController.collectionView
         let contentSize = collection.contentSize[keyPath: model.direction.sizeKeyPath]
         let contentOffset = collection.contentOffset[keyPath: model.direction.pointKeyPath]
         let offset = contentOffset + frame.size[keyPath: model.direction.sizeKeyPath]
         
-        if (contentSize > 0) && (offset / contentSize * 100 >= model.scrollThreshold) {
-            onScrollEndExecuted = true
-            renderer.controller.execute(actions: model.onScrollEnd, origin: self)
-        }
+        return (contentSize > 0) && (offset / contentSize * 100 >= model.scrollThreshold)
     }
 }
 
