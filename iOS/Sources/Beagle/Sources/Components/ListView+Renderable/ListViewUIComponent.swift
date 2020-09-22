@@ -83,6 +83,7 @@ final class ListViewUIComponent: UIView {
         setupViews()
     }
     
+    @available (*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -111,6 +112,13 @@ final class ListViewUIComponent: UIView {
     
     // MARK: - Sizing
     
+    /// Asks the view to calculate and return the size that best fits the specified size.
+    ///
+    /// This method will calculate each item size until the informed `size` is filled,
+    /// the remaining items size will be estimated as the average of the others.
+    ///
+    /// - Parameter size: The size for which the view should calculate its best-fitting size.
+    /// - Returns: A new size that fits the receiver’s subviews.
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         let collection = listController.collectionView
         let items = collectionView(collection, numberOfItemsInSection: 0)
