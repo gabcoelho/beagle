@@ -55,14 +55,17 @@ final class ListViewTests: XCTestCase {
     }
     
     func createListView(
-        valueContext: DynamicObject,
-        direction: ListView.Direction
+        direction: ListView.Direction,
+        contextValue: DynamicObject,
+        onInit: [RawAction]? = nil,
+        onScrollEnd: [RawAction]? = nil
     ) -> ListView {
         return ListView(
             context: Context(
                 id: "initialContext",
-                value: valueContext
+                value: contextValue
             ),
+            onInit: onInit,
             dataSource: Expression("@{initialContext}"),
             direction: direction,
             template: Container(
@@ -83,6 +86,7 @@ final class ListViewTests: XCTestCase {
                     )
                 )
             ),
+            onScrollEnd: onScrollEnd,
             widgetProperties: WidgetProperties(
                 style: Style(
                     backgroundColor: "#206a5d",
@@ -98,8 +102,8 @@ final class ListViewTests: XCTestCase {
     
     func testHorizontalDirection() {
         let component = createListView(
-            valueContext: simpleContext,
-            direction: .horizontal
+            direction: .horizontal,
+            contextValue: simpleContext
         )
 
         let view = renderListView(component)
@@ -109,8 +113,8 @@ final class ListViewTests: XCTestCase {
     
     func testVerticalDirection() {
         let component = createListView(
-            valueContext: simpleContext,
-            direction: .vertical
+            direction: .vertical,
+            contextValue: simpleContext
         )
         
         let view = renderListView(component)
@@ -124,8 +128,8 @@ final class ListViewTests: XCTestCase {
     
     func testHorizontalDirectionWithDifferentSizes() {
         let component = createListView(
-            valueContext: contextDifferentSizes,
-            direction: .horizontal
+            direction: .horizontal,
+            contextValue: contextDifferentSizes
         )
         
         let view = renderListView(component)
@@ -135,8 +139,8 @@ final class ListViewTests: XCTestCase {
     
     func testVerticalDirectionWithDifferentSizes() {
         let component = createListView(
-            valueContext: contextDifferentSizes,
-            direction: .vertical
+            direction: .vertical,
+            contextValue: contextDifferentSizes
         )
         
         let view = renderListView(component)
@@ -145,54 +149,16 @@ final class ListViewTests: XCTestCase {
     }
     
     // MARK: - Testing Execute Action onScrollEnd
-
-    func createListViewWithAction(
-        direction: ListView.Direction,
-        action: Action
-    ) -> ListView {
-        return ListView(
-            context: Context(
-                id: "initialContext",
-                value: ["Test"]
-            ),
-            dataSource: Expression("@{initialContext}"),
-            direction: direction,
-            template: Container(
-                children: [
-                    Text(
-                        "@{item}",
-                        widgetProperties: WidgetProperties(
-                            style: Style(
-                                backgroundColor: "#bfdcae"
-                            )
-                        )
-                    )
-                ],
-                widgetProperties: WidgetProperties(
-                    style: Style(
-                        backgroundColor: "#81b214",
-                        margin: EdgeValue().all(10)
-                    )
-                )
-            ),
-            onScrollEnd: [action],
-            widgetProperties: WidgetProperties(
-                style: Style(
-                    backgroundColor: "#206a5d",
-                    flex: Flex().grow(1)
-                )
-            )
-        )
-    }
     
     func testVerticalWithAction() {
         let expectation = XCTestExpectation(description: "Execute onScrollEnd")
         let action = ActionStub { _, _ in
             expectation.fulfill()
         }
-        let component = createListViewWithAction(
+        let component = createListView(
             direction: .vertical,
-            action: action
+            contextValue: [.empty],
+            onScrollEnd: [action]
         )
         
         let view = renderListView(component) as? ListViewUIComponent
@@ -209,9 +175,10 @@ final class ListViewTests: XCTestCase {
         let action = ActionStub { _, _ in
             expectation.fulfill()
         }
-        let component = createListViewWithAction(
+        let component = createListView(
             direction: .horizontal,
-            action: action
+            contextValue: [.empty],
+            onScrollEnd: [action]
         )
         
         let view = renderListView(component) as? ListViewUIComponent
@@ -221,30 +188,6 @@ final class ListViewTests: XCTestCase {
         wait(for: [expectation], timeout: 1.0)
         
         XCTAssertEqual(view?.onScrollEndExecuted, true)
-    }
-    
-    func testWithActionOnInit() {
-        //Given
-        let expectation = self.expectation(description: "Execute onInit")
-        let controllerSpy = BeagleControllerSpy()
-        controllerSpy.expectation = expectation
-        let renderer = BeagleRenderer(controller: controllerSpy)
-        let component = ListView(
-            context: Context(
-                id: "initialContext",
-                value: ["Test"]
-            ),
-            onInit: [],
-            dataSource: Expression("@{initialContext}"),
-            template: Text("@{item}")
-        )
-        
-        //When
-        _ = renderer.render(component)
-        
-        //Then
-        waitForExpectations(timeout: 5, handler: nil)
-        XCTAssert(controllerSpy.didCalledExecute)
     }
     
 }
