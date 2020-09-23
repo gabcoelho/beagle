@@ -69,6 +69,7 @@ struct ListViewScreen: DeeplinkScreen {
         let setContext = SetContext(contextId: "characters", value: "@{onSuccess.data.contents}")
         let sendRequest = SendRequest(
             url: "https://www.npoint.io/documents/40a36b479a05d8929f7a",
+            method: .value(.get),
             onSuccess: [setContext]
         )
         return simpleListScreen(
@@ -147,8 +148,8 @@ struct ListViewScreen: DeeplinkScreen {
                     value: ["page": 0, "total_pages": 0, "results": []]
                 )
             ) {
-                paginationListView
                 pager
+                paginationListView
             }
         }
     }
@@ -158,6 +159,7 @@ struct ListViewScreen: DeeplinkScreen {
             onInit: [
                 SendRequest(
                     url: "@{database}/trending.1.json",
+                    method: .value(.get),
                     onSuccess: [
                         SetContext(contextId: "moviePage", value: "@{onSuccess.data}")
                     ]
@@ -221,6 +223,7 @@ struct ListViewScreen: DeeplinkScreen {
                         onTrue: [
                             SendRequest(
                                 url: "@{database}/trending.@{subtract(moviePage.page, 1)}.json",
+                                method: .value(.get),
                                 onSuccess: [
                                     SetContext(contextId: "moviePage", value: "@{onSuccess.data}")
                                 ]
@@ -239,6 +242,7 @@ struct ListViewScreen: DeeplinkScreen {
                         onTrue: [
                             SendRequest(
                                 url: "@{database}/trending.@{sum(moviePage.page, 1)}.json",
+                                method: .value(.get),
                                 onSuccess: [
                                     SetContext(contextId: "moviePage", value: "@{onSuccess.data}")
                                 ]
@@ -273,6 +277,7 @@ struct ListViewScreen: DeeplinkScreen {
             onScrollEnd: [
                 SendRequest(
                     url: "@{database}/trending.@{sum(moviePage.page, 1)}.json",
+                    method: .value(.get),
                     onSuccess: [
                         SetContext(contextId: "moviePage", path: "page", value: "@{onSuccess.data.page}"),
                         SetContext(contextId: "moviePage", path: "total_pages", value: "@{onSuccess.data.total_pages}"),
@@ -304,6 +309,7 @@ struct ListViewScreen: DeeplinkScreen {
             onInit: [
                 SendRequest(
                     url: "@{database}/categories.json",
+                    method: .value(.get),
                     onSuccess: [
                         SetContext(
                             contextId: "categories",
@@ -357,6 +363,7 @@ struct ListViewScreen: DeeplinkScreen {
                     onScrollEnd: [
                         SendRequest(
                             url: "@{database}@{category.path}.@{sum(moviePage.page, 1)}.json",
+                            method: .value(.get),
                             onSuccess: [
                                 SetContext(contextId: "moviePage", path: "page", value: "@{onSuccess.data.page}"),
                                 SetContext(contextId: "moviePage", path: "total_pages", value: "@{onSuccess.data.total_pages}"),
