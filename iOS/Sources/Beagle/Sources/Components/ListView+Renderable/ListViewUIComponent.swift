@@ -121,8 +121,8 @@ final class ListViewUIComponent: UIView {
     /// - Returns: A new size that fits the receiver’s subviews.
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         let collection = listController.collectionView
-        let items = collectionView(collection, numberOfItemsInSection: 0)
-        guard items > 0 else { return .zero }
+        let numberOfItems = collectionView(collection, numberOfItemsInSection: 0)
+        guard numberOfItems > 0 else { return .zero }
         
         let directionValue: WritableKeyPath<CGSize, CGFloat>
         let otherValue: WritableKeyPath<CGSize, CGFloat>
@@ -135,7 +135,7 @@ final class ListViewUIComponent: UIView {
         
         var item = 0
         var listSize = CGSize.zero
-        while item < items && listSize[keyPath: directionValue] < size[keyPath: directionValue] {
+        while item < numberOfItems && listSize[keyPath: directionValue] < size[keyPath: directionValue] {
             let indexPath = IndexPath(item: item, section: 0)
             let cell = collection.cellForItem(at: indexPath) ?? collectionView(collection, cellForItemAt: indexPath)
             if let listViewCell = cell as? ListViewCell {
@@ -149,9 +149,9 @@ final class ListViewUIComponent: UIView {
             item += 1
         }
         
-        if item > 0 && item < items {
+        if item > 0 && item < numberOfItems {
             let average = listSize[keyPath: directionValue] / CGFloat(item)
-            listSize[keyPath: directionValue] += CGFloat(items - item) * average
+            listSize[keyPath: directionValue] += CGFloat(numberOfItems - item) * average
         }
         return listSize
     }
