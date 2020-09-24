@@ -30,7 +30,6 @@ import io.mockk.MockKAnnotations
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.every
-import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic

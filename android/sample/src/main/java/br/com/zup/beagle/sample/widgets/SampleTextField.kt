@@ -46,7 +46,7 @@ data class SampleTextField(val placeholder: String = "") : InputWidget() {
             override fun beforeTextChanged(oldText: CharSequence?, start: Int, before: Int, count: Int) {
             }
 
-            override fun onTextChanged(newText: CharSequence?,start: Int, before: Int, count: Int) {
+            override fun onTextChanged(newText: CharSequence?, start: Int, before: Int, count: Int) {
                 notifyChanges()
             }
 

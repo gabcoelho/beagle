@@ -123,8 +123,8 @@ internal class ToolbarManager {
     ) {
         toolbar.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
             val idealX = ((toolbar.width - titleTextView.width) / 2).toFloat()
-            val toolbarChildren: MutableList<View> = mutableListOf()
-            for (i in 0 until toolbar.childCount) {
+            val toolbarChildren : MutableList<View> = mutableListOf()
+            for(i : Int in 0 until toolbar.childCount){
                 toolbarChildren.add(toolbar.getChildAt(i))
             }
             val lastToolbarView = toolbarChildren.find {
@@ -232,11 +232,9 @@ internal class ToolbarManager {
 
     private fun setupNavigationIcon(context: Context, toolbar: Toolbar) {
         if(toolbar.navigationIcon == null) {
-            toolbar.navigationIcon =
-                getDrawableFromAttribute(
-                    context,
-                    android.support.v7.appcompat.R.attr.homeAsUpIndicator
-                )
+            toolbar.navigationIcon = getDrawableFromAttribute(
+                context,
+                android.support.v7.appcompat.R.attr.homeAsUpIndicator)
         }
     }
 }

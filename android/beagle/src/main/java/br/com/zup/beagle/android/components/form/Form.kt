@@ -91,7 +91,7 @@ data class Form(
     }
 
     private fun fetchFormViews(rootView: RootView, viewGroup: ViewGroup) {
-        for (i in 0 until viewGroup.childCount) {
+        for (i: Int in 0 until viewGroup.childCount) {
             val childView = viewGroup.getChildAt(i)
             if (childView.beagleComponent != null) {
                 val tag = childView.beagleComponent
@@ -107,6 +107,7 @@ data class Form(
                 fetchFormViews(rootView, childView)
             }
         }
+
 
         formValidatorController.configFormSubmit()
     }
@@ -219,7 +220,7 @@ data class Form(
                 handleEvent(rootView, view, formResult.action)
             }
             is FormResult.Error -> (rootView.getContext() as? BeagleActivity)?.onServerDrivenContainerStateChanged(
-                ServerDrivenState.FormError(formResult.throwable){ handleFormSubmit(rootView, view) }
+                ServerDrivenState.FormError(formResult.throwable) { handleFormSubmit(rootView, view) }
             )
         }
     }

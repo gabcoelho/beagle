@@ -50,7 +50,6 @@ android {
 }
 
 dependencies {
-
     implementation Dependencies.AndroidSupport.multidex
     implementation Dependencies.AndroidSupport.design
     implementation Dependencies.AndroidSupport.viewModel

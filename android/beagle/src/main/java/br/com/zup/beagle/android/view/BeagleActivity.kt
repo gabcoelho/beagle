@@ -98,7 +98,7 @@ private const val FIRST_SCREEN_KEY = "FIRST_SCREEN_KEY"
 
 abstract class BeagleActivity : AppCompatActivity(), OnFragmentCallback {
 
-    private val viewModel by lazy { ViewModelProviders.of(this)[BeagleViewModel::class.java]}
+    private val viewModel by lazy { ViewModelProviders.of(this).get(BeagleViewModel::class.java) }
     private val screenRequest by lazy { intent.extras?.getParcelable<ScreenRequest>(FIRST_SCREEN_REQUEST_KEY) }
     private val screen by lazy { intent.extras?.getString(FIRST_SCREEN_KEY) }
 

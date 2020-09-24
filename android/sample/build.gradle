@@ -53,7 +53,6 @@ android {
 }
 
 dependencies {
-
     implementation Dependencies.AndroidSupport.design
     implementation Dependencies.GeneralLibraries.kotlin
 

@@ -39,7 +39,7 @@ data class Input(
         setTextColor(Color.BLACK)
         setHintTextColor(Color.BLACK)
         val input = this
-        addTextChangedListener(object : TextWatcher{
+        addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(newText: Editable?) {
             }
 

@@ -18,19 +18,19 @@ package br.com.zup.beagle.android.context
 
 import android.support.v4.util.LruCache
 import br.com.zup.beagle.android.BaseTest
-import br.com.zup.beagle.android.context.tokenizer.ExpressionTokenExecutor
-import br.com.zup.beagle.android.context.tokenizer.function.FunctionResolver
 import br.com.zup.beagle.android.extensions.once
 import br.com.zup.beagle.android.logger.BeagleMessageLogs
 import br.com.zup.beagle.android.mockdata.ComponentModel
 import br.com.zup.beagle.android.testutil.RandomData
-import br.com.zup.beagle.android.utils.getExpressions
 import com.squareup.moshi.Moshi
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.verify
 import org.json.JSONArray
 import org.json.JSONObject
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -497,16 +497,28 @@ internal class ContextDataEvaluationTest : BaseTest() {
     }
 
     @Test
-    fun evaluateMultipleStringsExpressions() {
-        val bind = expressionOf<String>("lorem ipsum \\@{'hello world, this is { beagle }!}'} lotem ipsum @{nome} , \\\\\\\\@{context.id}" +
+    fun evaluateAllContext_in_multiple_expressions() {
+        val bind = expressionOf<String>("lorem } ipsum \\@{'hello world, this is { beagle }!}'} lotem ipsum @{nome} , \\\\\\\\@{context.id}" +
             "lorem ipsum @{'hello world, this is { beagle }!}'} lotem ipsum gabriel , \\\\\\\\@{context.id}")
 
         val value = contextDataEvaluation.evaluateBindExpression(listOf(CONTEXT_DATA), bind)
 
-        val expected = "lorem ipsum @{'hello world, this is { beagle }!}'} lotem ipsum  , \\\\" +
+        val expected = "lorem } ipsum @{'hello world, this is { beagle }!}'} lotem ipsum  , \\\\" +
             "lorem ipsum hello world, this is { beagle }!} lotem ipsum gabriel , \\\\"
 
         assertEquals(expected = expected, actual = value)
+    }
+
+    @Test
+    fun evaluateAllContext_in_object_with_expressions() {
+        // Given
+        val bind = expressionOf<String>("{\"id\":\"test\",\"value\":{\"expression\":\"@{$CONTEXT_ID.a}\"}}")
+
+        // When
+        val value = contextDataEvaluation.evaluateBindExpression(listOf(CONTEXT_DATA), bind)
+
+        // Then
+        assertEquals("{\"id\":\"test\",\"value\":{\"expression\":\"a\"}}", value)
     }
 
     @Test
