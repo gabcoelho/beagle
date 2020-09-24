@@ -56,6 +56,9 @@ public class BeagleScreenViewController: BeagleController {
     
     private var navigationControllerId: String?
     
+    // TODO: This workaround should be removed in BeagleView future implementation
+    var skipNavigationCreation = false
+    
     // MARK: - Initialization
     
     @discardableResult
@@ -195,7 +198,7 @@ public class BeagleScreenViewController: BeagleController {
     }
     
     private func createContent() {
-        if navigationController == nil {
+        if navigationController == nil && !skipNavigationCreation {
             createNavigationContent()
             return
         }
@@ -210,7 +213,7 @@ public class BeagleScreenViewController: BeagleController {
     }
     
     private func updateNavigationBar(animated: Bool) {
-        guard let screen = screen else { return }
+        guard let screen = screen, !skipNavigationCreation else { return }
         let screenNavigationBar = screen.navigationBar
         let hideNavBar = screenNavigationBar == nil
         navigationController?.setNavigationBarHidden(hideNavBar, animated: animated)
@@ -326,6 +329,7 @@ extension BeagleScreenViewController.Content {
             host.view.addSubview(view)
             view.anchorTo(superview: host.view)
             host.view.setNeedsLayout()
+            host.view.superview?.invalidateIntrinsicContentSize()
         }
     }
     
