@@ -50,14 +50,11 @@ class SampleServerDrivenActivity : BeagleActivity() {
     override fun onServerDrivenContainerStateChanged(state: ServerDrivenState) {
         if (state is ServerDrivenState.Started) {
             progressBar.visibility = View.VISIBLE
-            mToolbar.visibility = View.GONE
         }else if(state is ServerDrivenState.Finished){
             progressBar.visibility = View.GONE
         } else if (state is ServerDrivenState.Error) {
             mFrame.visibility = View.GONE
             buttonRetry(state)
-        } else if(state is ServerDrivenState.Success) {
-            mToolbar.visibility = View.VISIBLE
         }
     }
 

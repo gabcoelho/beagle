@@ -33,7 +33,6 @@
 
         <FrameLayout
             android:id="@+id/server_driven_container"
-            android:background="@color/colorBlack"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
