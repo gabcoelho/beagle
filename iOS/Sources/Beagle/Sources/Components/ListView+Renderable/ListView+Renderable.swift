@@ -47,11 +47,10 @@ extension ListView: ServerDrivenComponent {
     }
     
     private func setupSizeDefaultListView() {
-        if widgetProperties.style?.flex?.grow == nil {
-            let size = widgetProperties.style?.size
-            if size?.height == nil || size?.width == nil {
-                setupGrow()
-            }
+        if widgetProperties.style?.flex?.grow == nil,
+            let size = widgetProperties.style?.size,
+            size.height == nil || size.width == nil {
+            setupGrow()
         }
     }
     
