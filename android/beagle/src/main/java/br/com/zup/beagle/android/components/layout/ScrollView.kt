@@ -57,15 +57,22 @@ data class ScrollView(
 
         return viewFactory.makeBeagleFlexView(rootView, styleParent).apply {
 
+            val scrollViewHorizontal = viewFactory.makeHorizontalScrollView(context)
+            val scrollView =  viewFactory.makeScrollView(context)
+
             addView(if (scrollDirection == ScrollAxis.HORIZONTAL) {
-                viewFactory.makeHorizontalScrollView(context).apply {
+                scrollViewHorizontal.apply {
                     isHorizontalScrollBarEnabled = scrollBarEnabled
                     addChildrenViews(this, children, rootView, styleChild)
+                    scrollViewHorizontal.addOnLayoutChangeListener {  _, _, _, _, _, _, _, _, _ -> invalidateScroll(scrollView) }
                 }
             } else {
-                viewFactory.makeScrollView(context).apply {
+                scrollView.apply {
                     isVerticalScrollBarEnabled = scrollBarEnabled
                     addChildrenViews(this, children, rootView, styleChild)
+                    scrollView.addOnLayoutChangeListener {  _, _, _, _, _, _, _, _, _ ->
+                        invalidateScroll(scrollView)
+                    }
                 }
             }, styleParent)
         }
