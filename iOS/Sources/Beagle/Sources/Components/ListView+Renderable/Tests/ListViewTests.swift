@@ -190,6 +190,17 @@ final class ListViewTests: XCTestCase {
         XCTAssertEqual(view?.onScrollEndExecuted, true)
     }
     
+    func testSetupSizeDefaultListView() {
+        let component = ListView(
+            dataSource: .value([.empty]),
+            template: ComponentDummy()
+        )
+        
+        _ = renderListView(component)
+        
+        XCTAssertEqual(component.widgetProperties.style?.flex?.grow, 1)
+    }
+    
 }
 
 // MARK: - Testing Helpers
