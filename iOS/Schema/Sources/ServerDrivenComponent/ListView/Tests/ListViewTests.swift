@@ -28,7 +28,7 @@ class ListViewTests: XCTestCase {
           - context: Optional<Context>.none
           ▿ dataSource: Expression<Array<DynamicObject>>
             ▿ value: 1 element
-              - DynamicObject.empty
+              - 
           ▿ direction: Optional<Direction>
             - some: Direction.vertical
           ▿ iteratorName: Optional<String>
