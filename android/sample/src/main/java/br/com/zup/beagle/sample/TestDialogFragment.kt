@@ -21,13 +21,12 @@ import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.LifecycleObserver
 
 interface ClickInterface {
     fun clickOk()
 }
-class TestDialogFragment: DialogFragment {
+class TestDialogFragment: DialogFragment, LifecycleObserver {
 //    private val dialogViewModel: TestDialogFragmentViewModel by viewModels({ requireActivity() })
 //    private val dialogViewModel: TestDialogFragmentViewModel = ViewModelProvider(this.requireParentFragment().requireActivity()).get(TestDialogFragmentViewModel::class.java)
 

@@ -54,19 +54,4 @@ class TestFragment : Fragment() {
         fun newInstance() =
             TestFragment()
     }
-
-    fun getScreen(): Screen {
-        return Screen(
-            child = Container(
-                children = listOf(
-                    Button(
-                        text = "Click me",
-                        onPress = listOf(
-                            CustomAndroidAction()
-                        )
-                    )
-                )
-            )
-        )
-    }
 }
