@@ -48,8 +48,7 @@ extension ListView: ServerDrivenComponent {
     
     private func setupSizeDefaultListView() {
         if widgetProperties.style?.flex?.grow == nil,
-            let size = widgetProperties.style?.size,
-            size.height == nil || size.width == nil {
+            widgetProperties.style?.size == nil {
             setupGrow()
         }
     }
