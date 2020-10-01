@@ -23,7 +23,8 @@ import br.com.zup.beagle.widget.core.TextInputType
 import br.com.zup.beagle.widget.form.InputWidget
 
 /**
- *
+ * Input is a component that displays an editable text area for the user. These text fields are used to collect
+ * inputs that the user insert using the keyboard.
  *
  * @param value Required. Item referring to the input value that will be entered in the editable text area of the
  * Text Input component.
