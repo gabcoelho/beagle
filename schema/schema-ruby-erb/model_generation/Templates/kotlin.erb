@@ -35,7 +35,7 @@
     type_name
   end
 
-  def variable_type_declaration(variable, import_manager)
+  def variable_type_declaration(variable, import_manager, inheritFrom)
     #todo variables now have default values!
     output = ""
     if variable.instance_of? Dictionary
@@ -47,6 +47,11 @@
     output = variable.isBindable ? "BindAttribute<#{output}>" : output
     output = variable.class == List ? "List<#{output}>" : output
     output = variable.isOptional ? output + "?" : output
+    if variable.isOptional && variable.defaultValue == ""
+      output = output + " = null"
+    elsif variable.defaultValue != ""
+      output = inheritFrom.include?("String") ? output + " = \"#{variable.defaultValue}\"" : output + " = #{variable.defaultValue}" 
+    end
     output
   end
 
@@ -91,7 +96,7 @@ import <%= qualifiedName %>
 <% else %><% -%>
 <%=default_declaration_type-%> <%= objectType.synthax_type.name -%>Schema {<% -%>
 <% for variable in objectType.synthax_type.variables %>
-  <%= variable.accessor %> val <%= variable.name %>: <%= variable_type_declaration(variable, import_manager) -%>
+  <%= variable.accessor %> val <%= variable.name %>: <%= variable_type_declaration(variable, import_manager, objectType.synthax_type.inheritFrom) -%>
 <% end -%> 
 }
 <% end %><% -%>
