@@ -30,12 +30,14 @@ import br.com.zup.beagle.core.IdentifierComponent
 import br.com.zup.beagle.core.ServerDrivenComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicReference
 
 sealed class ViewState {
-    data class Error(val throwable: Throwable, val retry: BeagleRetry) : ViewState()
+    data class Error(val throwable: Throwable, val screenId: String? = null,val retry: BeagleRetry) : ViewState()
     data class Loading(val value: Boolean) : ViewState()
     data class DoRender(val screenId: String?, val component: ServerDrivenComponent) : ViewState()
 }
@@ -45,10 +47,25 @@ internal class BeagleViewModel(
     private val componentRequester: ComponentRequester = ComponentRequester()
 ) : ViewModel() {
 
+    private val hashMap : HashMap<String, FetchComponentLiveData> = HashMap()
+    private val keys : ArrayList<String> = ArrayList()
+
     fun fetchComponent(screenRequest: ScreenRequest, screen: ServerDrivenComponent? = null): LiveData<ViewState> {
-        return FetchComponentLiveData(screenRequest, screen, componentRequester,
+        val fetchComponentLiveData = FetchComponentLiveData(screenRequest, screen, componentRequester,
             viewModelScope, ioDispatcher)
+        addRequestOnHash(screenRequest, fetchComponentLiveData)
+        return fetchComponentLiveData
     }
+
+    private fun addRequestOnHash(screenRequest: ScreenRequest, fetchComponentLiveData: FetchComponentLiveData){
+        val url = screenRequest.url
+        if(urlIsNotNullOrEmpty(url)){
+            hashMap[url] = fetchComponentLiveData
+        }
+        keys.add(url)
+    }
+
+    private fun urlIsNotNullOrEmpty(url: String) = !url.isNullOrEmpty()
 
     fun fetchForCache(url: String) = viewModelScope.launch(ioDispatcher) {
         try {
@@ -58,13 +75,26 @@ internal class BeagleViewModel(
         }
     }
 
+    fun cancelJob() {
+        val key = keys[keys.size-1]
+        hashMap[key]?.cancelJob()
+        removeRequest(key)
+    }
+
+    fun removeRequest(screenRequest : String){
+        hashMap.remove(screenRequest)
+        keys.remove(screenRequest)
+    }
+
+
+
     private class FetchComponentLiveData(
         private val screenRequest: ScreenRequest,
         private val screen: ServerDrivenComponent?,
         private val componentRequester: ComponentRequester,
         private val coroutineScope: CoroutineScope,
         private val ioDispatcher: CoroutineDispatcher) : LiveData<ViewState>() {
-
+        private var job : Job? = null
         private val isRenderedReference = AtomicReference(false)
 
         override fun onActive() {
@@ -74,22 +104,34 @@ internal class BeagleViewModel(
         }
 
         private fun fetchComponents() {
-            coroutineScope.launch(ioDispatcher) {
+            job = coroutineScope.launch(ioDispatcher) {
                 val identifier = getComponentIdentifier()
                 if (screenRequest.url.isNotEmpty()) {
                     try {
                         setLoading(true)
+                        delay(5000)
+
                         val component = componentRequester.fetchComponent(screenRequest)
                         postLiveDataResponse(ViewState.DoRender(screenRequest.url, component))
                     } catch (exception: BeagleException) {
                         if (screen != null) {
                             postLiveDataResponse(ViewState.DoRender(identifier, screen))
                         } else {
-                            postLiveDataResponse(ViewState.Error(exception) { fetchComponents() })
+                            postLiveDataResponse(ViewState.Error(exception, screenRequest.url) { fetchComponents() })
+
                         }
                     }
                 } else if (screen != null) {
                     postLiveDataResponse(ViewState.DoRender(identifier, screen))
+                }
+            }
+
+        }
+
+        fun cancelJob() {
+            job?.let { job ->
+                if(!job.isCompleted){
+                    job.cancel()
                 }
             }
         }
