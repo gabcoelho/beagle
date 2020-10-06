@@ -17,6 +17,7 @@
 package br.com.zup.beagle.android.view.viewmodel
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.zup.beagle.android.components.layout.ScreenComponent
@@ -47,8 +48,7 @@ internal class BeagleViewModel(
     private val componentRequester: ComponentRequester = ComponentRequester()
 ) : ViewModel() {
 
-    private val hashMap : HashMap<String, FetchComponentLiveData> = HashMap()
-    private val keys : ArrayList<String> = ArrayList()
+    private var request : FetchComponentLiveData? = null
 
     fun fetchComponent(screenRequest: ScreenRequest, screen: ServerDrivenComponent? = null): LiveData<ViewState> {
         val fetchComponentLiveData = FetchComponentLiveData(screenRequest, screen, componentRequester,
@@ -60,9 +60,8 @@ internal class BeagleViewModel(
     private fun addRequestOnHash(screenRequest: ScreenRequest, fetchComponentLiveData: FetchComponentLiveData){
         val url = screenRequest.url
         if(urlIsNotNullOrEmpty(url)){
-            hashMap[url] = fetchComponentLiveData
+            request = fetchComponentLiveData
         }
-        keys.add(url)
     }
 
     private fun urlIsNotNullOrEmpty(url: String) = !url.isNullOrEmpty()
@@ -76,17 +75,10 @@ internal class BeagleViewModel(
     }
 
     fun cancelJob() {
-        val key = keys[keys.size-1]
-        hashMap[key]?.cancelJob()
-        removeRequest(key)
+        request?.let{
+            it.cancelJob()
+        }
     }
-
-    fun removeRequest(screenRequest : String){
-        hashMap.remove(screenRequest)
-        keys.remove(screenRequest)
-    }
-
-
 
     private class FetchComponentLiveData(
         private val screenRequest: ScreenRequest,

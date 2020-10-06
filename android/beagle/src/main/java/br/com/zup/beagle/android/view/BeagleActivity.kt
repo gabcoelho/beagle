@@ -227,7 +227,6 @@ abstract class BeagleActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         viewModel.cancelJob()
-
         onServerDrivenContainerStateChanged(ServerDrivenState.Error(Throwable()){
         })
         if (supportFragmentManager.backStackEntryCount == 1) {
@@ -252,7 +251,6 @@ abstract class BeagleActivity : AppCompatActivity() {
         state.observe(this, Observer {
             when (it) {
                 is ViewState.Error -> {
-                    removeRequest(it.screenId)
                     onServerDrivenContainerStateChanged(ServerDrivenState.Error(it.throwable, it.retry))
                 }
                 is ViewState.Loading -> {
@@ -265,18 +263,11 @@ abstract class BeagleActivity : AppCompatActivity() {
                     }
                 }
                 is ViewState.DoRender -> {
-                    removeRequest(it.screenId)
                     onServerDrivenContainerStateChanged(ServerDrivenState.Success)
                     showScreen(it.screenId, it.component)
                 }
             }
         })
-    }
-
-    private fun removeRequest(screenId: String?) {
-        screenId?.let {
-            viewModel.removeRequest(it)
-        }
     }
 
     private fun showScreen(screenName: String?, component: ServerDrivenComponent) {
