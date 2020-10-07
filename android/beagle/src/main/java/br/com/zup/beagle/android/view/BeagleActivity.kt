@@ -66,6 +66,11 @@ sealed class ServerDrivenState {
     object Success : ServerDrivenState()
 
     /**
+     * indicates that a server-driven component fetch has cancel
+     */
+    object Canceled : ServerDrivenState()
+
+    /**
      * indicates an error state while fetching a server-driven component
      *
      * @param throwable error occurred. See {@link br.com.zup.beagle.android.exception.BeagleApiException},
@@ -226,13 +231,12 @@ abstract class BeagleActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        viewModel.cancelJob()
-        onServerDrivenContainerStateChanged(ServerDrivenState.Error(Throwable()){
-        })
-        if (supportFragmentManager.backStackEntryCount == 1) {
-            finish()
-        } else {
-            super.onBackPressed()
+        if (!viewModel.cancelRequestComponent()) {
+            if (supportFragmentManager.backStackEntryCount == 1) {
+                finish()
+            } else {
+                super.onBackPressed()
+            }
         }
     }
 
@@ -262,6 +266,11 @@ abstract class BeagleActivity : AppCompatActivity() {
                         onServerDrivenContainerStateChanged(ServerDrivenState.Finished)
                     }
                 }
+
+                is ViewState.DoCancel -> {
+                    onServerDrivenContainerStateChanged(ServerDrivenState.Canceled)
+                }
+
                 is ViewState.DoRender -> {
                     onServerDrivenContainerStateChanged(ServerDrivenState.Success)
                     showScreen(it.screenId, it.component)

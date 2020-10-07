@@ -17,7 +17,6 @@
 package br.com.zup.beagle.android.view.viewmodel
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.zup.beagle.android.components.layout.ScreenComponent
@@ -29,18 +28,14 @@ import br.com.zup.beagle.android.utils.CoroutineDispatchers
 import br.com.zup.beagle.android.view.ScreenRequest
 import br.com.zup.beagle.core.IdentifierComponent
 import br.com.zup.beagle.core.ServerDrivenComponent
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicReference
 
 sealed class ViewState {
-    data class Error(val throwable: Throwable, val screenId: String? = null,val retry: BeagleRetry) : ViewState()
+    data class Error(val throwable: Throwable, val screenId: String? = null, val retry: BeagleRetry) : ViewState()
     data class Loading(val value: Boolean) : ViewState()
     data class DoRender(val screenId: String?, val component: ServerDrivenComponent) : ViewState()
+    object DoCancel : ViewState()
 }
 
 internal class BeagleViewModel(
@@ -48,23 +43,15 @@ internal class BeagleViewModel(
     private val componentRequester: ComponentRequester = ComponentRequester()
 ) : ViewModel() {
 
-    private var request : FetchComponentLiveData? = null
+    private var requestComponent: FetchComponentLiveData? = null
 
     fun fetchComponent(screenRequest: ScreenRequest, screen: ServerDrivenComponent? = null): LiveData<ViewState> {
         val fetchComponentLiveData = FetchComponentLiveData(screenRequest, screen, componentRequester,
             viewModelScope, ioDispatcher)
-        addRequestOnHash(screenRequest, fetchComponentLiveData)
+        requestComponent = fetchComponentLiveData
+
         return fetchComponentLiveData
     }
-
-    private fun addRequestOnHash(screenRequest: ScreenRequest, fetchComponentLiveData: FetchComponentLiveData){
-        val url = screenRequest.url
-        if(urlIsNotNullOrEmpty(url)){
-            request = fetchComponentLiveData
-        }
-    }
-
-    private fun urlIsNotNullOrEmpty(url: String) = !url.isNullOrEmpty()
 
     fun fetchForCache(url: String) = viewModelScope.launch(ioDispatcher) {
         try {
@@ -74,10 +61,8 @@ internal class BeagleViewModel(
         }
     }
 
-    fun cancelJob() {
-        request?.let{
-            it.cancelJob()
-        }
+    fun cancelRequestComponent(): Boolean {
+        return requestComponent?.cancelRequest() ?: false
     }
 
     private class FetchComponentLiveData(
@@ -86,7 +71,7 @@ internal class BeagleViewModel(
         private val componentRequester: ComponentRequester,
         private val coroutineScope: CoroutineScope,
         private val ioDispatcher: CoroutineDispatcher) : LiveData<ViewState>() {
-        private var job : Job? = null
+        private var job: Job? = null
         private val isRenderedReference = AtomicReference(false)
 
         override fun onActive() {
@@ -110,21 +95,27 @@ internal class BeagleViewModel(
                             postLiveDataResponse(ViewState.DoRender(identifier, screen))
                         } else {
                             postLiveDataResponse(ViewState.Error(exception, screenRequest.url) { fetchComponents() })
-
                         }
                     }
                 } else if (screen != null) {
                     postLiveDataResponse(ViewState.DoRender(identifier, screen))
                 }
             }
-
         }
 
-        fun cancelJob() {
-            job?.let { job ->
-                if(!job.isCompleted){
-                    job.cancel()
-                }
+        fun cancelRequest(): Boolean {
+            job?.let {
+                return if (!it.isCompleted) {
+                    it.cancel()
+                    coroutineScope.launch(ioDispatcher) {
+                        postValue(ViewState.DoCancel)
+                        setLoading(false)
+                    }
+                    true
+                } else
+                    false
+            } ?: run {
+                return false
             }
         }
 
