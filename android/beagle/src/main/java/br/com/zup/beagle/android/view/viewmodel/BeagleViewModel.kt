@@ -30,6 +30,7 @@ import br.com.zup.beagle.core.IdentifierComponent
 import br.com.zup.beagle.core.ServerDrivenComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicReference
@@ -45,9 +46,12 @@ internal class BeagleViewModel(
     private val componentRequester: ComponentRequester = ComponentRequester()
 ) : ViewModel() {
 
+    private var lastRequest : FetchComponentLiveData? = null
+
     fun fetchComponent(screenRequest: ScreenRequest, screen: ServerDrivenComponent? = null): LiveData<ViewState> {
-        return FetchComponentLiveData(screenRequest, screen, componentRequester,
+        lastRequest = FetchComponentLiveData(screenRequest, screen, componentRequester,
             viewModelScope, ioDispatcher)
+        return lastRequest as FetchComponentLiveData
     }
 
     fun fetchForCache(url: String) = viewModelScope.launch(ioDispatcher) {
@@ -58,12 +62,19 @@ internal class BeagleViewModel(
         }
     }
 
+    fun cancelRequest(){
+        lastRequest?.let{
+            it.cancelRequest()
+        }
+    }
+
     private class FetchComponentLiveData(
         private val screenRequest: ScreenRequest,
         private val screen: ServerDrivenComponent?,
         private val componentRequester: ComponentRequester,
         private val coroutineScope: CoroutineScope,
         private val ioDispatcher: CoroutineDispatcher) : LiveData<ViewState>() {
+        private var job : Job? = null
 
         private val isRenderedReference = AtomicReference(false)
 
@@ -74,7 +85,7 @@ internal class BeagleViewModel(
         }
 
         private fun fetchComponents() {
-            coroutineScope.launch(ioDispatcher) {
+            job = coroutineScope.launch(ioDispatcher) {
                 val identifier = getComponentIdentifier()
                 if (screenRequest.url.isNotEmpty()) {
                     try {
@@ -107,6 +118,12 @@ internal class BeagleViewModel(
         private suspend fun setLoading(loading: Boolean) {
             withContext(coroutineScope.coroutineContext) {
                 value = ViewState.Loading(loading)
+            }
+        }
+
+        fun cancelRequest(){
+            job?.let{
+                it.cancel()
             }
         }
     }

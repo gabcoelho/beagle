@@ -37,7 +37,6 @@ import br.com.zup.beagle.android.utils.BeagleRetry
 import br.com.zup.beagle.android.utils.DeprecationMessages.DEPRECATED_STATE_LOADING
 import br.com.zup.beagle.android.utils.NewIntentDeprecatedConstants
 import br.com.zup.beagle.android.utils.toComponent
-import br.com.zup.beagle.android.utils.tryToDeserialize
 import br.com.zup.beagle.android.view.viewmodel.BeagleViewModel
 import br.com.zup.beagle.android.view.viewmodel.ViewState
 import br.com.zup.beagle.core.ServerDrivenComponent
@@ -98,11 +97,11 @@ private const val FIRST_SCREEN_REQUEST_KEY = "FIRST_SCREEN_REQUEST_KEY"
 private const val FIRST_SCREEN_KEY = "FIRST_SCREEN_KEY"
 
 abstract class BeagleActivity : AppCompatActivity() {
-
+    private val USER_PRESS_BACK_BUTTON = "User press the back button"
     private val viewModel by lazy { ViewModelProvider(this).get(BeagleViewModel::class.java) }
     private val screenRequest by lazy { intent.extras?.getParcelable<ScreenRequest>(FIRST_SCREEN_REQUEST_KEY) }
     private val screen by lazy { intent.extras?.getString(FIRST_SCREEN_KEY) }
-
+    private var liveData : LiveData<ViewState>? = null
     companion object {
         @Deprecated(
             message = NewIntentDeprecatedConstants.DEPRECATED_NEW_INTENT,
@@ -227,11 +226,23 @@ abstract class BeagleActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
+        cancelRequestWhenScreenIsLoading()
         if (supportFragmentManager.backStackEntryCount == 1) {
             finish()
         } else {
             super.onBackPressed()
         }
+    }
+
+    private fun cancelRequestWhenScreenIsLoading(){
+        if(isScreenLoading()){
+            viewModel.cancelRequest()
+            onServerDrivenContainerStateChanged(ServerDrivenState.Error(Throwable(message = USER_PRESS_BACK_BUTTON)){})
+        }
+    }
+
+    private fun isScreenLoading() : Boolean{
+        return (liveData?.value as? ViewState.Loading)?.value ?: false
     }
 
     fun hasServerDrivenScreen(): Boolean = supportFragmentManager.backStackEntryCount > 0
@@ -241,8 +252,10 @@ abstract class BeagleActivity : AppCompatActivity() {
     }
 
     private fun fetch(screenRequest: ScreenRequest, screenComponent: ServerDrivenComponent? = null) {
-        val liveData = viewModel.fetchComponent(screenRequest, screenComponent)
-        handleLiveData(liveData)
+        liveData = viewModel.fetchComponent(screenRequest, screenComponent)
+        liveData?.let{
+            handleLiveData(it)
+        }
     }
 
     private fun handleLiveData(state: LiveData<ViewState>) {
