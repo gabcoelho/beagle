@@ -56,12 +56,45 @@ class ImageTests: XCTestCase {
         assertSnapshotImage(view, size: ImageSize.custom(CGSize(width: 400, height: 400)))
     }
     
+    func testRenderRemoteImage() {
+        let screen = Screen(navigationBar: NavigationBar(title: "PageView")) {
+            Container(context: Context(id: "currentPage", value: 2), widgetProperties: .init(Flex().grow(1))) {
+                PageIndicator(numberOfPages: 4, currentPage: "@{currentPage}")
+                PageView(
+                    children: [
+                        Container(widgetProperties: .init(Flex().justifyContent(.spaceBetween).grow(1))) {
+                            Text("Text with alignment attribute set to center", alignment: Expression.value(.center))
+                            Text("Text with alignment attribute set to right", alignment: Expression.value(.right))
+                            Text("Text with alignment attribute set to left", alignment: Expression.value(.left))
+                            Image(.value(.remote(.init(url: "https://www.petlove.com.br/images/"))))
+                        }
+                    ],
+                    pageIndicator: PageIndicator(),
+                    onPageChange: [SetContext(contextId: "currentPage", value: "@{onPageChange}")],
+                    currentPage: "@{currentPage}"
+                )
+            }
+        }
+
+        let dependencies = BeagleDependencies()
+        dependencies.imageDownloader = ImageDownloaderMock(expectation: expectation(description: "image downloader"))
+
+        let controller = BeagleScreenViewController(viewModel: .init(screenType: .declarative(screen), dependencies: dependencies))
+
+        let size = ImageSize.custom(.init(width: 400, height: 400))
+        assertSnapshotImage(controller, size: size)
+
+        self.waitForExpectations(timeout: 3)
+
+        assertSnapshotImage(controller, size: size)
+    }
+    
     func testCancelRequest() {
         //Given
         let image = Image("@{img.path}")
         let dependency = BeagleDependencies()
-        let repository = RepositoryStub(imageResult: .success(Data()))
-        dependency.repository = repository
+        let imageDownloader = ImageDownloaderStub(imageResult: .success(Data()))
+        dependency.imageDownloader = imageDownloader
         let container = Container(children: [image])
         let controller = BeagleScreenViewController(viewModel: .init(screenType:.declarative(container.toScreen()), dependencies: dependency))
         let action = SetContext(contextId: "img", path: "path", value: ["_beagleImagePath_": "local", "mobileId": "shuttle"])
@@ -69,11 +102,11 @@ class ImageTests: XCTestCase {
         
         //When
         view.setContext(Context(id: "img", value: ["path": ["_beagleImagePath_": "remote", "url": "www.com.br"]]))
-        controller.configBindings()
+        controller.bindings.config()
         action.execute(controller: controller, origin: view)
         
         // Then
-        XCTAssertTrue(repository.token.didCallCancel)
+        XCTAssertTrue(imageDownloader.token.didCallCancel)
     }
     
     func testInvalidURL() {
@@ -101,17 +134,31 @@ class ImageTests: XCTestCase {
     
     func testImageLeak() {
         // Given
-        let component = Image("@{img.path}")
+        let component = Image("@{img.path}", mode: .fitXY)
         let controller = BeagleScreenViewController(viewModel: .init(screenType:.declarative(component.toScreen()), dependencies: BeagleDependencies()))
         
         var view = component.toView(renderer: controller.renderer)
         weak var weakView = view
     
         // When
-        controller.configBindings()
+        controller.bindings.config()
         view = UIView()
         
         // Then
         XCTAssertNil(weakView)
+    }
+}
+
+private struct ImageDownloaderMock: ImageDownloader {
+    var expectation: XCTestExpectation?
+    
+    func fetchImage(url: String, additionalData: RemoteScreenAdditionalData?, completion: @escaping (Result<Data, Request.Error>) -> Void) -> RequestToken? {
+        let image = UIImage(named: "shuttle", in: Bundle(for: ImageTests.self), compatibleWith: nil)
+
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: false) { _ in
+            completion(.success(image?.pngData() ?? Data()))
+            self.expectation?.fulfill()
+        }
+        return nil
     }
 }

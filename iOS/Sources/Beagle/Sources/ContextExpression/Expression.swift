@@ -21,14 +21,12 @@ public extension Expression {
 
     func observe(
         view: UIView,
-        controller: BeagleController,
+        controller: BeagleControllerProtocol,
         updateFunction: @escaping (T?) -> Void
     ) {
         switch self {
         case let .expression(expression):
-            controller.addBinding { [weak view] in
-               view?.configBinding(for: expression, completion: updateFunction)
-            }
+            controller.addBinding(expression: expression, in: view, update: updateFunction)
         case let .value(value):
             updateFunction(value)
         }
@@ -43,26 +41,6 @@ public extension Expression {
         }
     }
 }
-
-// MARK: ExpressibleByLiteral
-extension Expression: ExpressibleByStringLiteral {
-    public init(stringLiteral value: String) {
-        let escaped = value.escapeExpressions()
-        if let expression = SingleExpression(rawValue: value) {
-            self = .expression(.single(expression))
-        } else if let multiple = MultipleExpression(rawValue: value) {
-            self = .expression(.multiple(multiple))
-        } else if let value = escaped as? T {
-            self = .value(value)
-        } else {
-            assertionFailure("Error: invalid Expression syntax \(value)")
-            Beagle.dependencies.logger.log(Log.expression(.invalidSyntax))
-            self = .expression(.multiple(MultipleExpression(nodes: [])))
-        }
-    }
-}
-
-extension Expression: ExpressibleByStringInterpolation {}
 
 extension Expression: ExpressibleByIntegerLiteral where T == Int {
     public init(integerLiteral value: Int) {

@@ -22,6 +22,7 @@ import br.com.zup.beagle.android.exception.BeagleException
 import br.com.zup.beagle.android.view.ScreenRequest
 import br.com.zup.beagle.android.view.mapper.toRequestData
 import br.com.zup.beagle.core.ServerDrivenComponent
+import kotlin.jvm.Throws
 
 internal class ComponentRequester(
     private val beagleApi: BeagleApi = BeagleApi(),
@@ -33,7 +34,7 @@ internal class ComponentRequester(
     suspend fun fetchComponent(screenRequest: ScreenRequest): ServerDrivenComponent {
         val url = screenRequest.url
         val beagleCache = cacheManager.restoreBeagleCacheForUrl(url)
-        val responseBody = if (beagleCache?.isHot == true) {
+        val responseBody = if (beagleCache?.isExpired() == false) {
             beagleCache.json
         } else {
             val newScreenRequest = cacheManager.screenRequestWithCache(screenRequest, beagleCache)

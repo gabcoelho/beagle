@@ -79,9 +79,24 @@ val CONTROLLER_REFERENCE = BeagleClass(
     "br.com.zup.beagle.android.navigation",
     "BeagleControllerReference"
 )
+val BEAGLE_CUSTOM_ADAPTER = BeagleClass(
+    "br.com.zup.beagle.android.data.serializer.adapter.generic",
+    "TypeAdapterResolver"
+)
+
+val BEAGLE_CUSTOM_ADAPTER_IMPL = BeagleClass(
+    "br.com.zup.beagle.android.data.serializer.adapter.generic",
+    "TypeAdapterResolverImpl"
+)
+
 val BEAGLE_LOGGER = BeagleClass(
     "br.com.zup.beagle.android.logger",
     "BeagleLogger"
+)
+
+val BEAGLE_IMAGE_DOWNLOADER = BeagleClass(
+    "br.com.zup.beagle.android.imagedownloader",
+    "BeagleImageDownloader"
 )
 
 val ANDROID_ACTION = BeagleClass(
