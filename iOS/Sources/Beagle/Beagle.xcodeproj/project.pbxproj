@@ -87,8 +87,8 @@
 		93D1C6BC24D06D6500351347 /* SendRequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D1C6BB24D06D6500351347 /* SendRequestTests.swift */; };
 		93D24A512513DF47005A5CBD /* AutoLayoutWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D24A502513DF47005A5CBD /* AutoLayoutWrapper.swift */; };
 		93D24A57251402B8005A5CBD /* AutoLayoutWrapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D24A56251402B8005A5CBD /* AutoLayoutWrapperTests.swift */; };
-		93EE0CA4252D0EE50032BE77 /* ViewConfiguratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93EE0CA3252D0EE50032BE77 /* ViewConfiguratorTests.swift */; };
 		93EE0C94252CA16C0032BE77 /* SetContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93EE0C93252CA16C0032BE77 /* SetContextTests.swift */; };
+		93EE0CA4252D0EE50032BE77 /* ViewConfiguratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93EE0CA3252D0EE50032BE77 /* ViewConfiguratorTests.swift */; };
 		93EE0CC3252E56BC0032BE77 /* BindingConfigurator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93EE0CC2252E56BC0032BE77 /* BindingConfigurator.swift */; };
 		9800ACFF2455D09B0030109F /* UrlBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9800ACFE2455D09B0030109F /* UrlBuilderTests.swift */; };
 		980654B32480114600761FD4 /* BeagleNavigatorAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980654B22480114600761FD4 /* BeagleNavigatorAnimation.swift */; };
@@ -357,9 +357,9 @@
 		93D24A502513DF47005A5CBD /* AutoLayoutWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoLayoutWrapper.swift; sourceTree = "<group>"; };
 		93D24A56251402B8005A5CBD /* AutoLayoutWrapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoLayoutWrapperTests.swift; sourceTree = "<group>"; };
 		93D24A9A2519334B005A5CBD /* __Snapshots__ */ = {isa = PBXFileReference; lastKnownFileType = folder; path = __Snapshots__; sourceTree = "<group>"; };
+		93EE0C93252CA16C0032BE77 /* SetContextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetContextTests.swift; sourceTree = "<group>"; };
 		93EE0CA3252D0EE50032BE77 /* ViewConfiguratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewConfiguratorTests.swift; sourceTree = "<group>"; };
 		93EE0CA9252D14AF0032BE77 /* __Snapshots__ */ = {isa = PBXFileReference; lastKnownFileType = folder; path = __Snapshots__; sourceTree = "<group>"; };
-		93EE0C93252CA16C0032BE77 /* SetContextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetContextTests.swift; sourceTree = "<group>"; };
 		93EE0CC2252E56BC0032BE77 /* BindingConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BindingConfigurator.swift; sourceTree = "<group>"; };
 		9800ACFE2455D09B0030109F /* UrlBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UrlBuilderTests.swift; sourceTree = "<group>"; };
 		980654B22480114600761FD4 /* BeagleNavigatorAnimation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeagleNavigatorAnimation.swift; sourceTree = "<group>"; };
@@ -506,7 +506,7 @@
 		E52236CA23745DED00E555BB /* HTTPRequestCanceling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPRequestCanceling.swift; sourceTree = "<group>"; };
 		E52236CC23745E8E00E555BB /* ListViewUIComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListViewUIComponent.swift; sourceTree = "<group>"; };
 		E5223777237C3C5500E555BB /* ServerDrivenComponent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ServerDrivenComponent.swift; path = Sources/Components/ServerDrivenComponent.swift; sourceTree = SOURCE_ROOT; };
-		E5223779237C3C5500E555BB /* Touchable+Renderable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Touchable+Renderable.swift"; path = "Sources/Action/Touchable+Renderable.swift"; sourceTree = SOURCE_ROOT; };
+		E5223779237C3C5500E555BB /* Touchable+Renderable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Touchable+Renderable.swift"; path = "Sources/Action/Types/Touchable+Renderable.swift"; sourceTree = SOURCE_ROOT; };
 		E5223782237C3CAF00E555BB /* FormInput+Renderable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FormInput+Renderable.swift"; sourceTree = "<group>"; };
 		E5223784237C3CC500E555BB /* FormSubmit+Renderable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FormSubmit+Renderable.swift"; sourceTree = "<group>"; };
 		E531D6B02359FD18007EEBA7 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
@@ -913,6 +913,7 @@
 		A05C74CE2497F29E009DBB66 /* Types */ = {
 			isa = PBXGroup;
 			children = (
+				E5223779237C3C5500E555BB /* Touchable+Renderable.swift */,
 				93A2EE1B24EC4BB00085B3CF /* AddChildren.swift */,
 				98E18D15249BE714009D6A54 /* Alert.swift */,
 				25C762A52510FFF500AB4D33 /* Condition.swift */,
@@ -1094,8 +1095,6 @@
 		C08D4E3A2485802600AAAC0A /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				E5223779237C3C5500E555BB /* Touchable+Renderable.swift */,
-				C829CEAA23B15F12001B7225 /* Tests */,
 				C08D4E3B2485802600AAAC0A /* LazyComponentTests.swift */,
 				C08D4E482485806200AAAC0A /* __Snapshots__ */,
 			);
@@ -1301,13 +1300,6 @@
 				C829CEBC23B16643001B7225 /* Tests */,
 			);
 			path = Renderer;
-			sourceTree = "<group>";
-		};
-		C829CEAA23B15F12001B7225 /* Tests */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Tests;
 			sourceTree = "<group>";
 		};
 		C829CEAF23B15FF0001B7225 /* Tests */ = {
@@ -1789,10 +1781,7 @@
 				C05E1652243663C20088F9D2 /* screenAnalyticsComponent.json in Resources */,
 				576A4D17249BFC09002EADFD /* ImageComponent.json in Resources */,
 				C05E1658243668E30088F9D2 /* __Snapshots__ in Resources */,
-				7CDF84942416DD8D00234F40 /* test_UnitValueExpressibleByFloatLiteral.1.txt in Resources */,
-				7CDF84912416DD8D00234F40 /* test_EdgeValueBuilder.1.txt in Resources */,
 				25BFEDA7252DD5E700365889 /* ImageDownloaderTests.xcassets in Resources */,
-				7CDF84902416DD8D00234F40 /* test_FlexBuilder.1.txt in Resources */,
 				C08D4E1B24857B2800AAAC0A /* ScrollViewComponent.json in Resources */,
 				C08D4EA6248599D200AAAC0A /* UrlBuilderTestSpec.json in Resources */,
 			);
